@@ -15,15 +15,15 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
       <button id="orientation-permission" style="display: none">
         Enable Device Orientation
       </button>
-      <label style="display:flex;flex-direction:column;gap:6px;align-items:center;">
-        <span style="opacity:0.8;font-size:0.9em;">Input Device</span>
-        <select id="inputSelect" class="select-control"></select>
+      <label class="select-control">
+        <span class="hint">Input Device</span>
+        <select id="inputSelect"></select>
       </label>
       <label class="file-button">
         Start
         <input id="startButton" type="file" accept="audio/*" />
       </label>
-      <div id="status" class="status"></div>
+      <div id="status" class="hint"></div>
     </div>
   `
 
@@ -59,6 +59,8 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
     const id = inputSelect.value
     Input.setActive(id)
   }
+
+  const unregister = Input.onDeviceChange(refreshDevices)
 
   // Update list when gamepads change
   const onGpChange = () => setTimeout(refreshDevices, 0)
@@ -99,7 +101,6 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
       setStatus('Failed to decode/analyze the audio file.')
     }
     // Cleanup listeners from upload screen once transitioning
-    window.removeEventListener('gamepadconnected', onGpChange)
-    window.removeEventListener('gamepaddisconnected', onGpChange)
+    unregister()
   }
 }

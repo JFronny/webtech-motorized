@@ -70,6 +70,10 @@ class InputManagerImpl {
     // Default selection
     if (touchCapable) this.activeId = 'touch'
     else this.activeId = 'keyboard'
+
+    const onGpChange = () => setTimeout(this.dispatchDeviceChange, 0)
+    window.addEventListener('gamepadconnected', onGpChange)
+    window.addEventListener('gamepaddisconnected', onGpChange)
   }
 
   private requestOrientationPermission() {
@@ -93,6 +97,7 @@ class InputManagerImpl {
 
   private register(dev: InputDevice) {
     this.devices.set(dev.id, dev)
+    this.dispatchDeviceChange()
   }
 
   private unregister(id: string) {
@@ -100,6 +105,18 @@ class InputManagerImpl {
     if (dev && dev.dispose) dev.dispose()
     this.devices.delete(id)
     if (this.activeId === id) this.activeId = this.devices.has('keyboard') ? 'keyboard' : Array.from(this.devices.keys())[0] || null
+    this.dispatchDeviceChange()
+  }
+
+  private dispatchDeviceChange() {
+    document.dispatchEvent(new Event('jf-input-device-change'))
+  }
+
+  onDeviceChange(listener: EventListener): () => void {
+    document.addEventListener('jf-input-device-change', listener)
+    return function () {
+      document.removeEventListener('jf-input-device-change', listener)
+    }
   }
 
   listDevices(): InputDeviceInfo[] {
