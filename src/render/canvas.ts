@@ -1,15 +1,17 @@
-import { createProgram, isWebGLAvailable } from './gl-utils.ts'
+import { createProgram, isWebGLAvailable } from './glUtils.ts'
 import fragmentShaderSource from './main.frag?raw'
 import vertexShaderSource from './main.vert?raw'
 
-export type CanvasRenderer = (opts: {
-  ctx: CanvasRenderingContext2D
-  canvas: HTMLCanvasElement
-  cssW: number
-  cssH: number
-  ts: number
-  dt: number
-}) => void
+export interface CanvasRenderer {
+  render(
+    ctx: CanvasRenderingContext2D,
+    canvas: HTMLCanvasElement,
+    cssW: number,
+    cssH: number,
+    timestamp: number,
+    deltaTime: number
+  ): void
+}
 
 export type CanvasController = {
   stop: () => void
@@ -163,8 +165,9 @@ export function initCanvas(container: HTMLDivElement): CanvasController {
 
     if (customRenderer) {
       try {
-        customRenderer({ ctx, canvas: canvas2d, cssW, cssH, ts, dt })
-      } catch {
+        customRenderer.render(ctx, canvas2d, cssW, cssH, ts, dt)
+      } catch (e) {
+        console.error('Error rendering custom renderer:', e)
         fallback()
       }
     } else {

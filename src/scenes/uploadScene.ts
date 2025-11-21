@@ -1,5 +1,5 @@
 import { analyzeAudio, type AudioAnalysis } from '../audio/audioProcessor'
-import { isWebGLAvailable } from '../render/gl-utils'
+import { isWebGLAvailable } from '../render/glUtils.ts'
 
 export type UploadComplete = (
   ctx: AudioContext,

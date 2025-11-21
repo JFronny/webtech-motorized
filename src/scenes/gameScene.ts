@@ -1,5 +1,6 @@
 import type { CanvasRenderer } from '../render/canvas.ts'
 import type { AudioAnalysis } from '../audio/audioProcessor'
+import {DebugGame} from "../games/debugGame.ts";
 
 export type GameRuntime = {
   audioCtx: AudioContext
@@ -17,86 +18,60 @@ export function startPlayback(ctx: AudioContext, buffer: AudioBuffer) {
   return { source, startTime }
 }
 
+const games = [DebugGame()]
+
 export function createGameRenderer(runtime: GameRuntime): CanvasRenderer {
-  const { audioCtx, startTime, analysis } = runtime
-  const frameSec = analysis.frameSize / analysis.sampleRate
-  const fps = 1 / frameSec
-  const peaks = analysis.peaks
+  let currentGame = -1
+  let wasPlying = false
 
-  // Visual params
-  const pixelsPerSecond = 360 // scroll speed; higher = faster leftwards
-  const peakLineWidth = 2
-
-  // Precompute style
-  const gridColor = 'rgba(255,255,255,0.25)'
-  const peakColor = 'rgba(100,200,255,0.95)'
-  const nowColor = 'rgba(255,0,0,0.8)'
-  const intensityColor = 'rgba(255,255,255,0.6)'
-
-  return ({ ctx, cssW, cssH }) => {
-    // Compute current playback time in seconds
-    const nowSec = Math.max(0, audioCtx.currentTime - startTime)
-
-    // Draw a baseline in the middle
-    const midY = Math.round(cssH * 0.5)
-    ctx.lineWidth = 1
-    ctx.strokeStyle = gridColor
-    ctx.beginPath()
-    ctx.moveTo(0, midY)
-    ctx.lineTo(cssW, midY)
-    ctx.stroke()
-
-    // Draw intensity rolling graph (right-aligned to "now" at center x)
-    const centerX = Math.round(cssW * 0.5)
-    const secondsVisibleLeft = centerX / pixelsPerSecond
-    const secondsVisibleRight = (cssW - centerX) / pixelsPerSecond
-    const startTimeSec = Math.max(0, nowSec - secondsVisibleLeft)
-    const endTimeSec = nowSec + secondsVisibleRight
-
-    // Map time to intensity frame index
-    function timeToIndex(t: number) { return Math.floor(t * fps) }
-
-    const startIdx = Math.max(0, timeToIndex(startTimeSec))
-    const endIdx = Math.min(analysis.intensities.length - 1, timeToIndex(endTimeSec))
-
-    ctx.strokeStyle = intensityColor
-    ctx.lineWidth = 2
-    ctx.beginPath()
-    let started = false
-    for (let i = startIdx; i <= endIdx; i++) {
-      const t = i / fps
-      const x = Math.round(centerX + (t - nowSec) * pixelsPerSecond)
-      const value = analysis.intensities[i]
-      const amp = (cssH * 0.35) * value
-      const y = midY - amp
-      if (!started) { ctx.moveTo(x, y); started = true } else { ctx.lineTo(x, y) }
+  function nextGame() {
+    currentGame = (currentGame + 1) % games.length
+    console.log(`Switching to game ${games[currentGame].id}`)
+    if (games[currentGame].state != 'Finished') {
+      throw new Error(`Game ${games[currentGame].id} is not finished`)
     }
-    ctx.stroke()
-
-    // Draw vertical lines for beat peaks that are in the visible window
-    ctx.strokeStyle = peakColor
-    ctx.lineWidth = peakLineWidth
-    for (let i = 0; i < peaks.length; i++) {
-      const t = peaks[i]
-      if (t < startTimeSec || t > endTimeSec) continue
-      const x = Math.round(centerX + (t - nowSec) * pixelsPerSecond) + 0.5 // crisp line
-      ctx.beginPath()
-      ctx.moveTo(x, midY - cssH * 0.4)
-      ctx.lineTo(x, midY + cssH * 0.35)
-      ctx.stroke()
+    games[currentGame].init(runtime)
+    if (games[currentGame].state != 'Initialized') {
+      throw new Error(`Game ${games[currentGame].id} did not initialize`)
     }
+    wasPlying = true
+    console.log(`Game ${games[currentGame].id} initialized`)
+  }
 
-    // Center line
-    ctx.strokeStyle = nowColor
-    ctx.beginPath()
-    ctx.moveTo(centerX, midY - cssH)
-    ctx.lineTo(centerX, midY + cssH)
-    ctx.stroke()
+  nextGame()
 
-    // Render debug text
-    ctx.fillStyle = 'white'
-    ctx.font = '14px system-ui, sans-serif'
-    const text = `t=${nowSec.toFixed(2)}s  bpm≈${analysis.bpm ?? 'n/a'}`
-    ctx.fillText(text, 12, 20)
+  return {
+    render(
+      ctx: CanvasRenderingContext2D,
+      _canvas2d: HTMLCanvasElement,
+      cssW: number,
+      cssH: number,
+      timestamp: number,
+      deltaTime: number,
+    ): void {
+      games[currentGame].render(ctx, cssW, cssH)
+      switch (games[currentGame].state) {
+        case 'Finished':
+          nextGame()
+          break
+        case 'Dead':
+          if (wasPlying) runtime.audioCtx.suspend()
+          wasPlying = false
+          ctx.fillStyle = 'rgba(255,0,0,0.3)'
+          ctx.fillRect(0, 0, cssW, cssH)
+          ctx.fillStyle = 'white'
+          ctx.textAlign = 'center'
+          ctx.font = '96px system-ui, sans-serif'
+          ctx.fillText('Game Over', cssW / 2, cssH / 2)
+          ctx.font = '48px system-ui, sans-serif'
+          ctx.fillText('Press space to restart', cssW / 2, cssH / 2 + 48)
+          break
+        default:
+          throw new Error(`Unknown game state: ${games[currentGame].state}`)
+        case 'Playing':
+          games[currentGame].update(timestamp, deltaTime)
+          break
+      }
+    }
   }
 }
