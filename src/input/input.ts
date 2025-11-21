@@ -90,7 +90,7 @@ class InputManagerImpl {
     }
 
     requestPermission!()
-      .then((response: string) => {
+      .then((response) => {
         if (response == 'granted') {
           document.getElementById('orientation-permission')!.style.display = 'block';
           this.register(new OrientationDevice());

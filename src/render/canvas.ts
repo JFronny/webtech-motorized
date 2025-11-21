@@ -48,7 +48,6 @@ export function initCanvas(container: HTMLDivElement): CanvasController {
 
   if (useWebGL) {
     const webglCanvas = document.createElement('canvas')
-    webglCanvas.id = 'gameCanvas'
     container.appendChild(webglCanvas)
     canvas = webglCanvas
     gl = canvas.getContext('webgl')
@@ -86,6 +85,7 @@ export function initCanvas(container: HTMLDivElement): CanvasController {
       u_bloom = gl.getUniformLocation(glProgram, 'u_bloom')
     } else {
       // Fallback if context creation fails
+      container.removeChild(webglCanvas)
       container.appendChild(canvas2d)
       canvas = canvas2d
     }
@@ -93,8 +93,8 @@ export function initCanvas(container: HTMLDivElement): CanvasController {
     // No WebGL support, just use the 2D canvas
     container.appendChild(canvas2d)
     canvas = canvas2d
-    canvas.id = 'gameCanvas'
   }
+  canvas.id = 'gameCanvas'
 
   let raf = 0
   let lastTimestamp = 0
@@ -126,6 +126,8 @@ export function initCanvas(container: HTMLDivElement): CanvasController {
 
     canvas.width = backingW
     canvas.height = backingH
+    canvas.style.width = `${cssWidth}px`
+    canvas.style.height = `${cssHeight}px`
 
     // The 2D canvas must have the same backing store size
     canvas2d.width = backingW
