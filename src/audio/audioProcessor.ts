@@ -1,3 +1,8 @@
+// Thanks to https://dsp.stackexchange.com/questions/9521/simple-beat-detection-algorithm-for-microcontroller
+
+import {dwtHaarLevels} from "./dwt.ts";
+import {meanRemove, movingAverage, normalize, toMono} from "./util.ts";
+
 export type AudioAnalysis = {
   sampleRate: number
   duration: number
@@ -5,18 +10,6 @@ export type AudioAnalysis = {
   frameSize: number // samples per frame used for intensities
   peaks: number[] // seconds of detected beat-like peaks
   bpm: number | null
-}
-
-function toMono(buffer: AudioBuffer): Float32Array {
-  if (buffer.numberOfChannels === 1) return buffer.getChannelData(0)
-  const len = buffer.length
-  const out = new Float32Array(len)
-  for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
-    const data = buffer.getChannelData(ch)
-    for (let i = 0; i < len; i++) out[i] += data[i]
-  }
-  for (let i = 0; i < len; i++) out[i] /= buffer.numberOfChannels
-  return out
 }
 
 function rms(data: Float32Array, start: number, end: number): number {
@@ -37,64 +30,85 @@ function getIntensities(data: Float32Array, frameSize: number): number[] {
   return intensities
 }
 
-function normalize(arr: number[]): number[] {
-  let max = 0
-  for (const v of arr) if (v > max) max = v
-  if (max === 0) return arr.map(() => 0)
-  return arr.map(v => v / max)
+function resampleLinear(src: Float32Array, inRate: number, outRate: number): Float32Array {
+  if (src.length === 0) return new Float32Array(0)
+  const duration = src.length / inRate
+  const outLen = Math.max(1, Math.round(duration * outRate))
+  const out = new Float32Array(outLen)
+  for (let i = 0; i < outLen; i++) {
+    const t = i / outRate
+    const x = t * inRate
+    const i0 = Math.floor(x)
+    const i1 = Math.min(src.length - 1, i0 + 1)
+    const frac = x - i0
+    out[i] = (1 - frac) * src[Math.min(i0, src.length - 1)] + frac * src[i1]
+  }
+  return out
 }
 
-function detectPeaks(intensities: number[], fps: number): number[] {
-  // Simple moving-average threshold + local maxima
-  const window = Math.max(1, Math.round(fps * 0.5))
-  const peaks: number[] = []
-  const avgWin = Math.max(1, Math.round(fps * 1.0))
-  let movingSum = 0
-  for (let i = 0; i < intensities.length; i++) {
-    const val = intensities[i]
-    // compute moving average
-    movingSum += val
-    if (i >= avgWin) movingSum -= intensities[i - avgWin]
-
-    const avg = movingSum / Math.min(i + 1, avgWin)
-    const threshold = avg * 1.3 // heuristic
-
-    // local maxima within window
-    const left = Math.max(0, i - window)
-    const right = Math.min(intensities.length - 1, i + window)
-    let isPeak = val > threshold
-    if (isPeak) {
-      for (let j = left; j <= right; j++) {
-        if (intensities[j] > val) { isPeak = false; break }
-      }
-    }
-    if (isPeak) peaks.push(i / fps)
-  }
-  return peaks
+function envelopeFromBand(band: Float32Array, bandRate: number, targetRate: number): Float32Array {
+  if (band.length === 0) return new Float32Array(0)
+  // Full-wave rectification
+  const rect = new Float32Array(band.length)
+  for (let i = 0; i < band.length; i++) rect[i] = Math.abs(band[i])
+  // Low-pass filter via short moving average at band rate (~30 ms)
+  const lpWin = Math.max(1, Math.round(0.03 * bandRate))
+  const smoothed = movingAverage(rect, lpWin)
+  // Downsample / resample to target envelope rate
+  const down = resampleLinear(smoothed, bandRate, targetRate)
+  // Mean removal
+  const meanRemoved = meanRemove(down)
+  // Additional 100 ms smoothing window at envelope rate
+  return movingAverage(meanRemoved, Math.max(1, Math.round(0.1 * targetRate)))
 }
 
-function estimateBpmFromPeaks(peaksSec: number[]): number | null {
-  if (peaksSec.length < 4) return null
-  // Build histogram of intervals between peaks (up to 8 neighbors)
-  const counts = new Map<number, number>()
-  for (let i = 0; i < peaksSec.length; i++) {
-    for (let j = 1; j <= 8 && i + j < peaksSec.length; j++) {
-      let interval = peaksSec[i + j] - peaksSec[i]
-      if (interval <= 0) continue
-      let bpm = 60 / interval
-      // fold into 60..200 range
-      while (bpm < 60) bpm *= 2
-      while (bpm > 200) bpm /= 2
-      const key = Math.round(bpm)
-      counts.set(key, (counts.get(key) || 0) + 1)
-    }
+function sumEnvelopes(envelopes: Float32Array[]): Float32Array {
+  let maxLen = 0
+  for (const e of envelopes) if (e.length > maxLen) maxLen = e.length
+  const out = new Float32Array(maxLen)
+  for (const e of envelopes) {
+    for (let i = 0; i < e.length; i++) out[i] += e[i]
   }
-  let best: number | null = null
-  let bestCount = -1
-  for (const [bpm, c] of counts.entries()) {
-    if (c > bestCount) { best = bpm; bestCount = c }
+  return out
+}
+
+function autocorrelateForBpm(env: Float32Array, envRate: number, minBpm = 40, maxBpm = 200): { bpm: number | null, bestLag: number | null } {
+  if (env.length < 4) return { bpm: null, bestLag: null }
+  const minLag = Math.ceil((60 * envRate) / maxBpm)
+  const maxLag = Math.ceil((60 * envRate) / minBpm)
+  const totalSamples = env.length - maxLag
+  if (totalSamples <= 1) return { bpm: null, bestLag: null }
+  let bestLag = -1
+  let bestVal = -Infinity
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let sum = 0
+    for (let i = 0; i < totalSamples; i++) sum += env[i] * env[i + lag]
+    if (sum > bestVal) { bestVal = sum; bestLag = lag }
   }
-  return best
+  if (bestLag <= 0) return { bpm: null, bestLag: null }
+  const bpm = 60 * envRate / bestLag
+  return { bpm, bestLag }
+}
+
+function detectPeaksFromEnvelope(env: Float32Array, envRate: number): number[] {
+  const peaksSec: number[] = []
+  const n = env.length
+  if (n === 0) return peaksSec
+
+  // thresholded local maxima with refractory window ~120ms
+  const win = Math.max(2, Math.round(0.12 * envRate))
+  // dynamic threshold based on moving average
+  const avg = movingAverage(env, Math.max(1, Math.round(0.4 * envRate)))
+  for (let i = 1; i < n - 1; i++) {
+    const isMax = env[i] > env[i - 1] && env[i] >= env[i + 1]
+    if (!isMax) continue
+    if (env[i] < avg[i] * 1.2) continue
+    // check refractory: last peak must be at least win samples behind
+    const last = peaksSec.length ? Math.round(peaksSec[peaksSec.length - 1] * envRate) : -win - 1
+    if (i - last < win) continue
+    peaksSec.push(i / envRate)
+  }
+  return peaksSec
 }
 
 export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
@@ -104,15 +118,28 @@ export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
   const duration = buffer.duration
 
   const data = toMono(buffer)
-  const intensities = getIntensities(data, frameSize)
-  const normInt = normalize(intensities)
-  const peaks = detectPeaks(normInt, fps)
-  const bpm = estimateBpmFromPeaks(peaks)
+  const intensities = normalize(getIntensities(data, frameSize))
+
+  // DWT (Haar) six-level decomposition
+  const maxLevels = 6
+  const { details } = dwtHaarLevels(data, maxLevels)
+  const bands: Float32Array[] = details.slice(0, maxLevels)
+  // Effective sample rate per band reduces by 2 each level
+  const envelopes: Float32Array[] = []
+  const targetEnvRate = 250 // Hz
+  for (let i = 0; i < bands.length; i++) {
+    const bandRate = sampleRate / Math.pow(2, i + 1) // detail level i+1
+    const env = envelopeFromBand(bands[i], bandRate, targetEnvRate)
+    envelopes.push(env)
+  }
+  const sumEnv = sumEnvelopes(envelopes)
+  const { bpm } = autocorrelateForBpm(sumEnv, targetEnvRate, 40, 200)
+  const peaks = detectPeaksFromEnvelope(sumEnv, targetEnvRate)
 
   return {
     sampleRate,
     duration,
-    intensities: normInt,
+    intensities,
     frameSize,
     peaks,
     bpm,
