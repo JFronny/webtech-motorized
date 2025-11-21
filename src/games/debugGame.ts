@@ -1,6 +1,7 @@
 import type {Game, GameState} from "./game.ts";
-import type {GameInput, GameRuntime} from "../scenes/gameScene.ts";
+import type {GameRuntime} from "../scenes/gameScene.ts";
 import type {AudioAnalysis} from "../audio/audioProcessor.ts";
+import {Input} from "../input/input.ts";
 
 class DebugGameImpl implements Game {
   readonly id = "debug"
@@ -16,7 +17,6 @@ class DebugGameImpl implements Game {
   private intensityColor = 'rgba(255,255,255,0.6)'
 
   // Runtime information
-  private input: GameInput | undefined
   private audioCtx: AudioContext | undefined
   private startTime: number | undefined
   private analysis: AudioAnalysis | undefined
@@ -26,7 +26,6 @@ class DebugGameImpl implements Game {
   state: GameState = 'Finished'
 
   init(runtime: GameRuntime): void {
-    this.input = runtime.input
     this.audioCtx = runtime.audioCtx
     this.startTime = runtime.startTime
     this.analysis = runtime.analysis
@@ -108,7 +107,7 @@ class DebugGameImpl implements Game {
     // Render input
     ctx.fillStyle = 'white'
     ctx.beginPath()
-    const sample = this.input!.sample()
+    const sample = Input.sample()
     const x = Math.round(centerX + sample[0] * cssW * 0.35)
     const y = midY - sample[1] * cssH * 0.35
     ctx.arc(x, y, 6, 0, Math.PI * 2)

@@ -48,13 +48,7 @@ initUploadScreen(container, async (ctx, buffer, analysis) => {
     audioCtx: ctx,
     source,
     startTime,
-    analysis,
-    input: {
-      sample: () => Input.sample(),
-      listDevices: () => Input.listDevices(),
-      setActive: (id: string) => Input.setActive(id),
-      getActiveId: () => Input.getActiveId(),
-    },
+    analysis
   }
   controller.setRenderer(createGameRenderer(runtime))
 
