@@ -1,4 +1,4 @@
-import type { CanvasRenderer } from '../canvas'
+import type { CanvasRenderer } from '../render/canvas.ts'
 import type { AudioAnalysis } from '../audio/audioProcessor'
 
 export type GameRuntime = {
@@ -24,7 +24,7 @@ export function createGameRenderer(runtime: GameRuntime): CanvasRenderer {
   const peaks = analysis.peaks
 
   // Visual params
-  const pixelsPerSecond = 140 // scroll speed; higher = faster leftwards
+  const pixelsPerSecond = 360 // scroll speed; higher = faster leftwards
   const peakLineWidth = 2
 
   // Precompute style
@@ -38,7 +38,7 @@ export function createGameRenderer(runtime: GameRuntime): CanvasRenderer {
     const nowSec = Math.max(0, audioCtx.currentTime - startTime)
 
     // Draw a baseline in the middle
-    const midY = Math.round(cssH * 0.6)
+    const midY = Math.round(cssH * 0.5)
     ctx.lineWidth = 1
     ctx.strokeStyle = gridColor
     ctx.beginPath()

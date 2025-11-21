@@ -1,5 +1,5 @@
 import './style.css'
-import { initCanvas, type CanvasController } from './canvas'
+import { initCanvas, type CanvasController } from './render/canvas.ts'
 import { initUploadScreen } from './scenes/uploadScene'
 import { createGameRenderer, startPlayback, type GameRuntime } from './scenes/gameScene'
 

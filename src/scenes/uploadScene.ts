@@ -1,4 +1,5 @@
 import { analyzeAudio, type AudioAnalysis } from '../audio/audioProcessor'
+import { isWebGLAvailable } from '../render/gl-utils'
 
 export type UploadComplete = (
   ctx: AudioContext,
@@ -25,6 +26,10 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
 
   function setStatus(msg: string) {
     status.textContent = msg
+  }
+
+  if (!isWebGLAvailable()) {
+    setStatus('Note: WebGL not available, post-processing effects are disabled.')
   }
 
   fileInput.onchange = async () => {
@@ -54,7 +59,7 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
       const analysis = analyzeAudio(audioBuffer, 60)
 
       setStatus(`Done. BPM ≈ ${analysis.bpm ?? 'n/a'} — switching to game...`)
-      await new Promise<void>(resolve => setTimeout(resolve, 1000))
+      await new Promise<void>(resolve => setTimeout(resolve, 500))
       await onComplete(audioCtx, audioBuffer, analysis)
     } catch (err) {
       console.error(err)

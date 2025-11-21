@@ -1,7 +1,7 @@
 // Thanks to https://dsp.stackexchange.com/questions/9521/simple-beat-detection-algorithm-for-microcontroller
 
-import {dwtHaarLevels} from "./dwt.ts";
-import {meanRemove, movingAverage, normalize, toMono} from "./util.ts";
+import {dwtHaarLevels} from './dwt';
+import {meanRemove, movingAverage, normalize, toMono} from './util';
 
 export type AudioAnalysis = {
   sampleRate: number
@@ -102,7 +102,7 @@ function detectPeaksFromEnvelope(env: Float32Array, envRate: number): number[] {
   for (let i = 1; i < n - 1; i++) {
     const isMax = env[i] > env[i - 1] && env[i] >= env[i + 1]
     if (!isMax) continue
-    if (env[i] < avg[i] * 1.2) continue
+    if (env[i] < avg[i] * 1.3) continue
     // check refractory: last peak must be at least win samples behind
     const last = peaksSec.length ? Math.round(peaksSec[peaksSec.length - 1] * envRate) : -win - 1
     if (i - last < win) continue
