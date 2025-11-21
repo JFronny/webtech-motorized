@@ -18,6 +18,13 @@ export interface InputDevice extends InputDeviceInfo {
   dispose?(): void
 }
 
+interface DeviceOrientationEventiOS extends DeviceOrientationEvent {
+  requestPermission?: () => Promise<'granted' | 'denied'>;
+}
+
+const requestPermission = (DeviceOrientationEvent as unknown as DeviceOrientationEventiOS).requestPermission;
+const orientationNeedsPermission = typeof requestPermission === 'function';
+
 class InputManagerImpl {
   private devices = new Map<string, InputDevice>()
   private activeId: string | null = null
@@ -51,8 +58,7 @@ class InputManagerImpl {
 
     // Device orientation if supported
     if (window.location.protocol == 'https:' || window.location.hostname == 'localhost') {
-      if (typeof DeviceOrientationEvent !== 'undefined' &&
-        typeof DeviceOrientationEvent.requestPermission === 'function') {
+      if (typeof DeviceOrientationEvent !== 'undefined' && orientationNeedsPermission) {
 
         // Show permission button for iOS
         const button: HTMLElement = document.getElementById('orientation-permission')!;
@@ -83,7 +89,7 @@ class InputManagerImpl {
       return;
     }
 
-    DeviceOrientationEvent.requestPermission()
+    requestPermission!()
       .then((response: string) => {
         if (response == 'granted') {
           document.getElementById('orientation-permission')!.style.display = 'block';
