@@ -1,12 +1,21 @@
 import type { CanvasRenderer } from '../render/canvas.ts'
 import type { AudioAnalysis } from '../audio/audioProcessor'
+import type { InputDeviceInfo } from '../input/input.ts'
 import {DebugGame} from "../games/debugGame.ts";
+
+export type GameInput = {
+  sample: () => [number, number]
+  listDevices: () => InputDeviceInfo[]
+  setActive: (id: string) => void
+  getActiveId: () => string | null
+}
 
 export type GameRuntime = {
   audioCtx: AudioContext
   source: AudioBufferSourceNode
   startTime: number // audioCtx.currentTime at start()
   analysis: AudioAnalysis
+  input: GameInput
 }
 
 export function startPlayback(ctx: AudioContext, buffer: AudioBuffer) {
@@ -18,7 +27,7 @@ export function startPlayback(ctx: AudioContext, buffer: AudioBuffer) {
   return { source, startTime }
 }
 
-const games = [DebugGame()]
+const games = [DebugGame]
 
 export function createGameRenderer(runtime: GameRuntime): CanvasRenderer {
   let currentGame = -1

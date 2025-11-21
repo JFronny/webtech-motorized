@@ -1,6 +1,6 @@
 import type {GameRuntime} from "../scenes/gameScene.ts";
 
-type GameState = 'Finished' | 'Initialized' | 'Playing' | 'Dead'
+export type GameState = 'Finished' | 'Initialized' | 'Playing' | 'Dead'
 
 export interface Game {
   id: string

@@ -2,6 +2,7 @@ import './style.css'
 import { initCanvas, type CanvasController } from './render/canvas.ts'
 import { initUploadScreen } from './scenes/uploadScene'
 import { createGameRenderer, startPlayback, type GameRuntime } from './scenes/gameScene'
+import { Input } from './input/input.ts'
 
 const container = document.querySelector<HTMLDivElement>('#app')!
 container.innerHTML = ''
@@ -21,6 +22,9 @@ let fsOverlayBtn: HTMLButtonElement | null = null
 let runtime: GameRuntime | null = null
 
 // 1) Show upload screen; on success, switch to game scene
+// Ensure input system is ready before showing upload (for device list)
+Input.init()
+
 initUploadScreen(container, async (ctx, buffer, analysis) => {
   // Build game root
   container.innerHTML = `
@@ -40,7 +44,18 @@ initUploadScreen(container, async (ctx, buffer, analysis) => {
 
   // Prepare renderer and playback
   const { source, startTime } = startPlayback(ctx, buffer)
-  runtime = { audioCtx: ctx, source, startTime, analysis }
+  runtime = {
+    audioCtx: ctx,
+    source,
+    startTime,
+    analysis,
+    input: {
+      sample: () => Input.sample(),
+      listDevices: () => Input.listDevices(),
+      setActive: (id: string) => Input.setActive(id),
+      getActiveId: () => Input.getActiveId(),
+    },
+  }
   controller.setRenderer(createGameRenderer(runtime))
 
   // Fullscreen change handler: show canvas when in fullscreen (on small devices),

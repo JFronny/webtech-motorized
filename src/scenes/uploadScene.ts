@@ -1,5 +1,6 @@
 import { analyzeAudio, type AudioAnalysis } from '../audio/audioProcessor'
 import { isWebGLAvailable } from '../render/glUtils.ts'
+import { Input } from '../input/input'
 
 export type UploadComplete = (
   ctx: AudioContext,
@@ -11,6 +12,13 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
   root.innerHTML = `
     <div style="display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center;height:100vh;">
       <h1>Motorized</h1>
+      <button id="orientation-permission" style="display: none">
+        Enable Device Orientation
+      </button>
+      <label style="display:flex;flex-direction:column;gap:6px;align-items:center;">
+        <span style="opacity:0.8;font-size:0.9em;">Input Device</span>
+        <select id="inputSelect" class="select-control"></select>
+      </label>
       <label class="file-button">
         Start
         <input id="startButton" type="file" accept="audio/*" />
@@ -21,6 +29,7 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
 
   const fileInput = root.querySelector<HTMLInputElement>('#startButton')!
   const status = root.querySelector<HTMLDivElement>('#status')!
+  const inputSelect = root.querySelector<HTMLSelectElement>('#inputSelect')!
 
   let audioCtx: AudioContext | null = null
 
@@ -31,6 +40,30 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
   if (!isWebGLAvailable()) {
     setStatus('Note: WebGL not available, post-processing effects are disabled.')
   }
+
+  function refreshDevices() {
+    const devices = Input.listDevices()
+    const active = Input.getActiveId()
+    inputSelect.innerHTML = ''
+    for (const d of devices) {
+      const opt = document.createElement('option')
+      opt.value = d.id
+      opt.textContent = d.name
+      if (d.id === active) opt.selected = true
+      inputSelect.appendChild(opt)
+    }
+  }
+  refreshDevices()
+
+  inputSelect.onchange = () => {
+    const id = inputSelect.value
+    Input.setActive(id)
+  }
+
+  // Update list when gamepads change
+  const onGpChange = () => setTimeout(refreshDevices, 0)
+  window.addEventListener('gamepadconnected', onGpChange)
+  window.addEventListener('gamepaddisconnected', onGpChange)
 
   fileInput.onchange = async () => {
     const file = fileInput.files && fileInput.files[0]
@@ -65,5 +98,8 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
       console.error(err)
       setStatus('Failed to decode/analyze the audio file.')
     }
+    // Cleanup listeners from upload screen once transitioning
+    window.removeEventListener('gamepadconnected', onGpChange)
+    window.removeEventListener('gamepaddisconnected', onGpChange)
   }
 }
