@@ -1,5 +1,5 @@
 import './style.css'
-import { initUploadScreen } from './scenes/uploadScene.tsx'
+import {type Audio, initUploadScreen} from './scenes/uploadScene.tsx'
 import {initGameScreen} from './scenes/gameScene.tsx'
 import { Input } from './input/input.ts'
 
@@ -14,7 +14,7 @@ container.innerHTML = ''
 // This does not need to be async since we just use callbacks to fill in the data
 Input.init()
 
-initUploadScreen(container, async (ctx, buffer, analysis) => {
+initUploadScreen(container, async (audio: Audio) => {
   // Build game root
-  await initGameScreen(container, ctx, buffer, analysis)
+  await initGameScreen(container, audio)
 })

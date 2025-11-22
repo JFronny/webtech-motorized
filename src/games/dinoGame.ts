@@ -22,7 +22,6 @@ function chooseObstacleLane(analysis: AudioAnalysis, t: number): 'low' | 'high' 
     count++
   }
   const avg = count ? (sum / count) : 0
-  // thresholds chosen empirically; feel free to tweak
   if (avg > 0.40) return 'low'   // loud -> ground obstacle
   if (avg > 0.10) return 'high'  // quieter -> flying obstacle
   return 'none'
@@ -31,28 +30,14 @@ function chooseObstacleLane(analysis: AudioAnalysis, t: number): 'low' | 'high' 
 class DinoGameImpl implements Game {
   readonly id = 'dino'
 
-  // Visual / game params (pixel-based constants kept for tuning, but converted to normalized space)
-  private pixelsPerSecond = 360
-  private playerWpx = 30
-  private playerHpx = 40
-  private obstacleWpx = 28
-  private obstacleHpx = 36
-
-  // Reference resolution used to convert pixel-tuned constants into normalized [0,1] units.
-  // This keeps internal logic resolution-independent while preserving roughly the same feel.
-  private readonly REF_W = 1280
-  private readonly REF_H = 720
-
-  // Derived normalized constants
-  private normalizedSpeed = this.pixelsPerSecond / this.REF_W // fraction of width per second
-  private playerW = this.playerWpx / this.REF_W
-  private playerH = this.playerHpx / this.REF_H
-  private obstacleW = this.obstacleWpx / this.REF_W
-  private obstacleH = this.obstacleHpx / this.REF_H
-
-  // Physics (converted to normalized vertical units per second^2 / per second)
-  private gravity = -2000 / this.REF_H // normalized per second^2 (negative = pull down)
-  private jumpV = 650 / this.REF_H // normalized units per second (upwards)
+  // Constants chosen by experimentation
+  private readonly speed = 0.3
+  private readonly playerW = 0.03
+  private readonly playerH = 0.05
+  private readonly obstacleW = 0.02
+  private readonly obstacleH = 0.05
+  private readonly gravity = -2.8
+  private readonly jumpV = 0.9
 
   // Runtime
   private audioCtx: AudioContext | undefined
@@ -98,7 +83,7 @@ class DinoGameImpl implements Game {
   // Normalized rectangle for an obstacle at time nowSec
   private obstacleRectNorm(ob: Obstacle, nowSec: number): Rect {
     const centerX = 0.5
-    const x = centerX + (ob.t - nowSec) * this.normalizedSpeed
+    const x = centerX + (ob.t - nowSec) * this.speed
     const l = x
     const r = x + this.obstacleW
     const midY = 0.5
@@ -183,7 +168,7 @@ class DinoGameImpl implements Game {
     }
 
     // Spawn obstacles based on peaks
-    const spawnLead = 0.5 / this.normalizedSpeed + 0.05
+    const spawnLead = 0.5 / this.speed + 0.05
     while (this.nextPeakIndex < this.peaks.length) {
       const peakT = this.peaks[this.nextPeakIndex]
       if (peakT < nowSec) { this.nextPeakIndex++; continue }

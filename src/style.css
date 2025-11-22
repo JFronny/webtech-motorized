@@ -5,6 +5,7 @@
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
+  --disabled-color: rgba(255, 255, 255, 0.6);
   background-color: #242424;
 
   font-synthesis: none;
@@ -42,7 +43,7 @@ body {
 .intro-root {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
   align-items: center;
   justify-content: center;
   height: 100vh
@@ -109,24 +110,6 @@ body {
   font-size: 0.9em;
 }
 
-.file-button {
-  input[type="file"] {
-    display: none;
-  }
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-.file-button:hover {
-  border-color: #646cff;
-}
-
 /* Simple select styling to match buttons */
 .select-control {
   display: flex;
@@ -169,7 +152,10 @@ h1 {
   padding: 2em;
 }
 
-button {
+.btn {
+  > input {
+    display: none;
+  }
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
@@ -180,17 +166,21 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
-button:hover {
+.btn:hover {
   border-color: #646cff;
 }
-button:focus,
-button:focus-visible {
+.btn:focus, .btn:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+}
+.btn:disabled, .btn:has(input:disabled) {
+  cursor: not-allowed;
+  color: var(--disabled-color);
 }
 
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
+    --disabled-color: #ccc;
     background-color: #ffffff;
   }
   a:hover {

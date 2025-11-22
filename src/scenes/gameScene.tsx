@@ -3,6 +3,7 @@ import type { AudioAnalysis } from '../audio/audioProcessor'
 import JSX from "src/jsx.ts";
 import {DinoGame} from "src/games/dinoGame.ts";
 import {Input} from "../input/input.ts";
+import type {Audio} from "src/scenes/uploadScene.tsx";
 
 // Implementation for the game screen
 // This is the main screen where the game is played
@@ -17,8 +18,9 @@ function shouldUseFullscreen(): boolean {
   return isMobileUA || minSide < 700
 }
 
-export async function initGameScreen(root: HTMLElement, ctx: AudioContext, buffer: AudioBuffer, analysis: AudioAnalysis) {
-  const fsOverlayBtn = <button type="button">Enter Fullscreen to Resume</button> as HTMLButtonElement
+export async function initGameScreen(root: HTMLElement, audio: Audio) {
+  const { ctx, buffer, analysis } = audio
+  const fsOverlayBtn = <button class="btn" type="button">Enter Fullscreen to Resume</button> as HTMLButtonElement
   const fsOverlay = <div class="fs-overlay">{fsOverlayBtn}</div> as HTMLDivElement
   const gameRoot = <div class="game-root">
     {fsOverlay}
@@ -114,8 +116,6 @@ const games = [DinoGame]
 export function createGameRenderer(runtime: GameRuntime): CanvasRenderer {
   let currentGame = -1
 
-  // Dead-screen state: when a game dies we first require the user to release the Up input (y <= 0),
-  // then wait 3 seconds, then accept Up (y > 0) to restart the same game.
   let deadInfo: { active: boolean; waitingForRelease: boolean; releaseTimestamp: number; cooldownUntil: number } = {
     active: false,
     waitingForRelease: false,

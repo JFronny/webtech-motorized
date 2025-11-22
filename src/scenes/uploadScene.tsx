@@ -7,34 +7,41 @@ import JSX from "src/jsx.ts";
 // This is the first screen the user sees when starting the app
 // and allows them to select an audio file to play
 
-export type UploadComplete = (
-  ctx: AudioContext,
-  buffer: AudioBuffer,
-  analysis: AudioAnalysis,
-) => void | Promise<void>
+export type Audio = { ctx: AudioContext; buffer: AudioBuffer, analysis: AudioAnalysis }
+
+export type UploadComplete = (audio: Audio) => void | Promise<void>
 
 export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) {
   let inputSelect = <select onchange={(e: Event) => {Input.setActive((e.target as HTMLInputElement).value)}}></select> as HTMLSelectElement
-  let status = <div id="status" class="hint"></div> as HTMLDivElement
+  let status = <div class="hint"></div> as HTMLDivElement
+  let startButton = <button onclick={async (_: any) => {
+    unregister()
+    await onComplete(audio!)
+  }} class="btn" disabled>Start</button> as HTMLButtonElement
   root.replaceChildren(<div class="intro-root">
     <h1>Motorized</h1>
-    <button id="orientation-permission" style="display: none">
+    <button id="orientation-permission" class="btn" style="display: none">
       Enable Device Orientation
     </button>
     <label class="select-control">
       <span class="hint">Input Device</span>
       {inputSelect}
     </label>
-    <label class="file-button">
-      Start
+    <label class="btn">
+      Pick a song
       <input type="file" accept="audio/*" onchange={async (e: Event) => {
-        await switchToGame(e.target as HTMLInputElement)
+        const input = e.target as HTMLInputElement
+        input.disabled = true
+        await processAudio(input)
+        startButton.disabled = false
       }} />
     </label>
     {status}
+    {startButton}
   </div>)
 
   let audioCtx: AudioContext | null = null
+  let audio: Audio | null = null
 
   function setStatus(msg: string) {
     status!.textContent = msg
@@ -61,7 +68,7 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
 
   const unregister = Input.onDeviceChange(refreshDevices)
 
-  async function switchToGame(fileInput: HTMLInputElement) {
+  async function processAudio(fileInput: HTMLInputElement) {
     const file = fileInput.files && fileInput.files[0]
     if (!file) {
       setStatus('Please choose an audio file first.')
@@ -87,14 +94,11 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
       setStatus('Analyzing...')
       const analysis = analyzeAudio(audioBuffer, 60)
 
-      setStatus(`Done. BPM ≈ ${analysis.bpm ?? 'n/a'} — switching to game...`)
-      await new Promise<void>(resolve => setTimeout(resolve, 500))
-      await onComplete(audioCtx, audioBuffer, analysis)
+      setStatus(`Done. BPM ≈ ${analysis.bpm ?? 'n/a'}`)
+      audio = { ctx: audioCtx!, buffer: audioBuffer, analysis }
     } catch (err) {
       console.error(err)
       setStatus('Failed to decode/analyze the audio file.')
     }
-    // Cleanup listeners from upload screen once transitioning
-    unregister()
   }
 }
