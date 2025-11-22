@@ -3,6 +3,10 @@ import {GamepadDevice} from "./gamepadDevice.ts";
 import {TouchDevice} from "./touchDevice.ts";
 import {OrientationDevice} from "./orientationDevice.ts";
 
+// A simple input system that supports multiple input devices
+// Each device returns a single normalized 2d vector.
+// This allows for maximum compatibility, including using a device orientation sensor on mobile.
+
 export type Vec2 = [number, number]
 
 export type InputDeviceType = 'keyboard' | 'gamepad' | 'touch' | 'orientation'

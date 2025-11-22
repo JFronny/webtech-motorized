@@ -2,6 +2,10 @@ import { createProgram, isWebGLAvailable } from './glUtils.ts'
 import fragmentShaderSource from './main.frag?raw'
 import vertexShaderSource from './main.vert?raw'
 
+// Sets up the 2d canvas for drawing the game scene.
+// If WebGL is available, that canvas is used as a texture for the WebGL scene.
+// This allows post-processing effects to be applied to the game scene while remaining compatible
+
 export interface CanvasRenderer {
   render(
     ctx: CanvasRenderingContext2D,
@@ -43,8 +47,6 @@ export function initCanvas(container: HTMLDivElement): CanvasController {
   let texture: WebGLTexture | null = null
   let u_resolution: WebGLUniformLocation | null = null
   let u_time: WebGLUniformLocation | null = null
-  let u_aberration: WebGLUniformLocation | null = null
-  let u_bloom: WebGLUniformLocation | null = null
 
   if (useWebGL) {
     const webglCanvas = document.createElement('canvas')
@@ -81,8 +83,6 @@ export function initCanvas(container: HTMLDivElement): CanvasController {
       // Get uniform locations
       u_resolution = gl.getUniformLocation(glProgram, 'u_resolution')
       u_time = gl.getUniformLocation(glProgram, 'u_time')
-      u_aberration = gl.getUniformLocation(glProgram, 'u_aberration')
-      u_bloom = gl.getUniformLocation(glProgram, 'u_bloom')
     } else {
       // Fallback if context creation fails
       container.removeChild(webglCanvas)
@@ -126,12 +126,11 @@ export function initCanvas(container: HTMLDivElement): CanvasController {
 
     canvas.width = backingW
     canvas.height = backingH
-    canvas.style.width = `${cssWidth}px`
-    canvas.style.height = `${cssHeight}px`
-
-    // The 2D canvas must have the same backing store size
     canvas2d.width = backingW
     canvas2d.height = backingH
+    // The canvas element size is kept consistent with the backing size to avoid blurry rendering
+    canvas.style.width = `${cssWidth}px`
+    canvas.style.height = `${cssHeight}px`
 
     // The 2D context should always be scaled to CSS pixels for consistent drawing logic
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
@@ -185,8 +184,6 @@ export function initCanvas(container: HTMLDivElement): CanvasController {
       // Set uniforms
       gl.uniform2f(u_resolution, gl.drawingBufferWidth, gl.drawingBufferHeight)
       gl.uniform1f(u_time, ts / 1000.0)
-      gl.uniform1f(u_aberration, 2.0) // effect strength
-      gl.uniform1f(u_bloom, 0.4) // effect strength
 
       // Draw the quad
       gl.drawArrays(gl.TRIANGLES, 0, 6)

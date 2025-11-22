@@ -91,6 +91,22 @@ class DebugGameImpl implements Game {
       ctx.stroke()
     }
 
+    // Draw four small lines to visualize the bpm according to the current time
+    if (this.analysis!.bpm) {
+      const bpm = this.analysis!.bpm
+      const spb = 60 / bpm // seconds per beat
+      const firstBeatAfterStart = Math.ceil(startTimeSec / spb) * spb
+      ctx.strokeStyle = this.peakColor
+      ctx.lineWidth = 1
+      for (let t = firstBeatAfterStart; t <= endTimeSec; t += spb) {
+        const x = Math.round(centerX + (t - nowSec) * this.pixelsPerSecond) + 0.5
+        ctx.beginPath()
+        ctx.moveTo(x, midY - cssH * 0.02)
+        ctx.lineTo(x, midY + cssH * 0.02)
+        ctx.stroke()
+      }
+    }
+
     // Center line
     ctx.strokeStyle = this.nowColor
     ctx.beginPath()

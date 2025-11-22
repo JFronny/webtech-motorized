@@ -3,6 +3,10 @@ import { isWebGLAvailable } from '../render/glUtils.ts'
 import { Input } from '../input/input'
 import JSX from "src/jsx.ts";
 
+// Implementation for the upload screen
+// This is the first screen the user sees when starting the app
+// and allows them to select an audio file to play
+
 export type UploadComplete = (
   ctx: AudioContext,
   buffer: AudioBuffer,

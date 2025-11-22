@@ -3,6 +3,10 @@ import type { AudioAnalysis } from '../audio/audioProcessor'
 import {DebugGame} from "../games/debugGame.ts";
 import JSX from "src/jsx.ts";
 
+// Implementation for the game screen
+// This is the main screen where the game is played
+// Note that the actual game logic is in the game classes themselves
+
 // Helper: heuristic to decide whether to use fullscreen on start (mobile / small screens)
 function shouldUseFullscreen(): boolean {
   const minSide = Math.min(window.innerWidth, window.innerHeight)

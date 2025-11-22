@@ -1,5 +1,9 @@
+// Glue code for JSX without React
+// Picked up by the IDE and Vite using their respective configs
+// Also see vite.config.js, tsconfig.json and external.d.ts
+
 export const JSX = {
-  createElement: (element: string | ((arg0: { children: any[] }) => any), props: { [id: string]: any }, ...children: any[])=> {
+  createElement: (element: string | ((arg0: { children: any[] }) => any), props: { [id: string]: any }, ...children: any[]): HTMLElement => {
     props = props || {}
     if (typeof element === 'function') {
       return element({

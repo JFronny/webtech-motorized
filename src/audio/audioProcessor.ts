@@ -90,7 +90,10 @@ function autocorrelateForBpm(env: Float32Array, envRate: number, minBpm = 40, ma
   return { bpm, bestLag }
 }
 
-function detectPeaksFromEnvelope(env: Float32Array, envRate: number): number[] {
+// The idea here was to use context from the sum envelope to filter out noise.
+// This did not work.
+// @ts-ignore
+function detectPeaksFromEnvelope(env: Float32Array, sumEnv: Float32Array, envRate: number): number[] {
   const peaksSec: number[] = []
   const n = env.length
   if (n === 0) return peaksSec
@@ -102,13 +105,59 @@ function detectPeaksFromEnvelope(env: Float32Array, envRate: number): number[] {
   for (let i = 1; i < n - 1; i++) {
     const isMax = env[i] > env[i - 1] && env[i] >= env[i + 1]
     if (!isMax) continue
-    if (env[i] < avg[i] * 1.3) continue
+    console.log(env[i], avg[i])
+    if (Math.abs(env[i]) < Math.abs(avg[i]) * 1.8) continue
     // check refractory: last peak must be at least win samples behind
     const last = peaksSec.length ? Math.round(peaksSec[peaksSec.length - 1] * envRate) : -win - 1
     if (i - last < win) continue
     peaksSec.push(i / envRate)
   }
   return peaksSec
+}
+
+// Just using the sumEnv did not work since it missed obvious peaks that only occured in some bands.
+// I tried fixing that by evaluating peaks for separate bands, but that just made things worse by adding noise.
+// @ts-ignore
+function detectPeaksFromEnvelopes(envelopes: Float32Array[], sumEnv: Float32Array, envRate: number): number[] {
+  const peaks: number[] = []
+  for (const env of envelopes) {
+    const peaksInEnv = detectPeaksFromEnvelope(env, sumEnv, envRate)
+    peaks.push(...peaksInEnv)
+  }
+  return peaks.sort((a, b) => a - b)
+}
+
+// This is both my first attempt and the one that worked best.
+// It naively filters out peaks in the intensity, regardless of how they occur/to which band they belong.
+// This does not work for every song and it misses some peaks even in the best cases,
+// but it works well enough with enough songs to be enough for this demo.
+function detectPeaks(intensities: number[], fps: number): number[] {
+  // Simple moving-average threshold + local maxima
+  const window = Math.max(1, Math.round(fps * 0.5))
+  const peaks: number[] = []
+  const avgWin = Math.max(1, Math.round(fps * 1.0))
+  let movingSum = 0
+  for (let i = 0; i < intensities.length; i++) {
+    const val = intensities[i]
+    // compute moving average
+    movingSum += val
+    if (i >= avgWin) movingSum -= intensities[i - avgWin]
+
+    const avg = movingSum / Math.min(i + 1, avgWin)
+    const threshold = avg * 1.3 // heuristic
+
+    // local maxima within window
+    const left = Math.max(0, i - window)
+    const right = Math.min(intensities.length - 1, i + window)
+    let isPeak = val > threshold
+    if (isPeak) {
+      for (let j = left; j <= right; j++) {
+        if (intensities[j] > val) { isPeak = false; break }
+      }
+    }
+    if (isPeak) peaks.push(i / fps)
+  }
+  return peaks
 }
 
 export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
@@ -122,8 +171,7 @@ export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
 
   // DWT (Haar) six-level decomposition
   const maxLevels = 6
-  const { details } = dwtHaarLevels(data, maxLevels)
-  const bands: Float32Array[] = details.slice(0, maxLevels)
+  const { details: bands } = dwtHaarLevels(data, maxLevels)
   // Effective sample rate per band reduces by 2 each level
   const envelopes: Float32Array[] = []
   const targetEnvRate = 250 // Hz
@@ -133,8 +181,8 @@ export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
     envelopes.push(env)
   }
   const sumEnv = sumEnvelopes(envelopes)
-  const { bpm } = autocorrelateForBpm(sumEnv, targetEnvRate, 40, 200)
-  const peaks = detectPeaksFromEnvelope(sumEnv, targetEnvRate)
+  const { bpm } = autocorrelateForBpm(sumEnv, targetEnvRate, 40, 300)
+  const peaks = detectPeaks(intensities, fps)
 
   return {
     sampleRate,
@@ -142,6 +190,6 @@ export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
     intensities,
     frameSize,
     peaks,
-    bpm,
+    bpm: bpm,
   }
 }
