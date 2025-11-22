@@ -1,5 +1,13 @@
 {
   "compilerOptions": {
+    "jsx": "react",
+    "jsxFactory": "JSX.createElement",
+    "jsxFragmentFactory": "HTMLElement",
+    "baseUrl": ".",
+    "paths": {
+      "src/*": ["src/*"]
+    },
+
     "target": "ES2022",
     "useDefineForClassFields": true,
     "module": "ESNext",

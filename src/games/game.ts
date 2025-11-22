@@ -1,4 +1,4 @@
-import type {GameRuntime} from "../scenes/gameScene.ts";
+import type {GameRuntime} from "../scenes/gameScene.tsx";
 
 export type GameState = 'Finished' | 'Initialized' | 'Playing' | 'Dead'
 

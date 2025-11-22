@@ -1,6 +1,7 @@
 import { analyzeAudio, type AudioAnalysis } from '../audio/audioProcessor'
 import { isWebGLAvailable } from '../render/glUtils.ts'
 import { Input } from '../input/input'
+import JSX from "src/jsx.ts";
 
 export type UploadComplete = (
   ctx: AudioContext,
@@ -9,32 +10,30 @@ export type UploadComplete = (
 ) => void | Promise<void>
 
 export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) {
-  root.innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:16px;align-items:center;justify-content:center;height:100vh;">
-      <h1>Motorized</h1>
-      <button id="orientation-permission" style="display: none">
-        Enable Device Orientation
-      </button>
-      <label class="select-control">
-        <span class="hint">Input Device</span>
-        <select id="inputSelect"></select>
-      </label>
-      <label class="file-button">
-        Start
-        <input id="startButton" type="file" accept="audio/*" />
-      </label>
-      <div id="status" class="hint"></div>
-    </div>
-  `
-
-  const fileInput = root.querySelector<HTMLInputElement>('#startButton')!
-  const status = root.querySelector<HTMLDivElement>('#status')!
-  const inputSelect = root.querySelector<HTMLSelectElement>('#inputSelect')!
+  let inputSelect = <select onchange={(e: Event) => {Input.setActive((e.target as HTMLInputElement).value)}}></select> as HTMLSelectElement
+  let status = <div id="status" class="hint"></div> as HTMLDivElement
+  root.replaceChildren(<div class="intro-root">
+    <h1>Motorized</h1>
+    <button id="orientation-permission" style="display: none">
+      Enable Device Orientation
+    </button>
+    <label class="select-control">
+      <span class="hint">Input Device</span>
+      {inputSelect}
+    </label>
+    <label class="file-button">
+      Start
+      <input type="file" accept="audio/*" onchange={async (e: Event) => {
+        await switchToGame(e.target as HTMLInputElement)
+      }} />
+    </label>
+    {status}
+  </div>)
 
   let audioCtx: AudioContext | null = null
 
   function setStatus(msg: string) {
-    status.textContent = msg
+    status!.textContent = msg
   }
 
   if (!isWebGLAvailable()) {
@@ -44,30 +43,21 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
   function refreshDevices() {
     const devices = Input.listDevices()
     const active = Input.getActiveId()
-    inputSelect.innerHTML = ''
+    inputSelect!.innerHTML = ''
     for (const d of devices) {
       const opt = document.createElement('option')
       opt.value = d.id
       opt.textContent = d.name
       if (d.id === active) opt.selected = true
-      inputSelect.appendChild(opt)
+      inputSelect!.appendChild(opt)
     }
   }
-  refreshDevices()
 
-  inputSelect.onchange = () => {
-    const id = inputSelect.value
-    Input.setActive(id)
-  }
+  refreshDevices()
 
   const unregister = Input.onDeviceChange(refreshDevices)
 
-  // Update list when gamepads change
-  const onGpChange = () => setTimeout(refreshDevices, 0)
-  window.addEventListener('gamepadconnected', onGpChange)
-  window.addEventListener('gamepaddisconnected', onGpChange)
-
-  fileInput.onchange = async () => {
+  async function switchToGame(fileInput: HTMLInputElement) {
     const file = fileInput.files && fileInput.files[0]
     if (!file) {
       setStatus('Please choose an audio file first.')

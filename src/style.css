@@ -39,6 +39,15 @@ body {
   text-align: center;
 }
 
+.intro-root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+  height: 100vh
+}
+
 /* Full-viewport container for the canvas; background provides "black bars" on ultrawide */
 .game-canvas-container,
 .game-root {

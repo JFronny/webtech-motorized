@@ -1,5 +1,5 @@
 import type {Game, GameState} from "./game.ts";
-import type {GameRuntime} from "../scenes/gameScene.ts";
+import type {GameRuntime} from "../scenes/gameScene.tsx";
 import type {AudioAnalysis} from "../audio/audioProcessor.ts";
 import {Input} from "../input/input.ts";
 
