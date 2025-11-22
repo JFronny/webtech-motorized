@@ -11,3 +11,6 @@ export interface Game {
 
   state: GameState
 }
+
+export type Vec2 = [number, number]
+export type Rect = { l: number; r: number; t: number; b: number }

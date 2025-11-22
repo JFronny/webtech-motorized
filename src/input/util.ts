@@ -1,4 +1,4 @@
-import type {Vec2} from "./input.ts";
+import type {Vec2} from "src/games/game.ts";
 
 export function clamp(v: number, min: number, max: number) { return Math.max(min, Math.min(max, v)) }
 

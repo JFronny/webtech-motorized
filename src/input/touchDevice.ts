@@ -1,5 +1,6 @@
-import type {InputDevice, InputDeviceType, Vec2} from "./input.ts";
+import type {InputDevice, InputDeviceType} from "./input.ts";
 import {clamp, norm2} from "./util.ts";
+import type {Vec2} from "src/games/game.ts";
 
 export class TouchDevice implements InputDevice {
   readonly id = 'touch'

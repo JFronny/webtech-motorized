@@ -1,5 +1,6 @@
-import type {InputDevice, InputDeviceType, Vec2} from "./input.ts";
+import type {InputDevice, InputDeviceType} from "./input.ts";
 import {clamp, norm2} from "./util.ts";
+import type {Vec2} from "src/games/game.ts";
 
 // I have validate that only one instance of this class is ever created,
 // both by reviewing my code and by using a callback from the constructor.

@@ -1,4 +1,5 @@
-import type {InputDevice, InputDeviceType, Vec2} from "./input.ts";
+import type {InputDevice, InputDeviceType} from "./input.ts";
+import type {Vec2} from "src/games/game.ts";
 
 export class KeyboardDevice implements InputDevice {
   readonly id = 'keyboard'

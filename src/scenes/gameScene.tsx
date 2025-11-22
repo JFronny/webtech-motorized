@@ -1,7 +1,8 @@
 import {type CanvasRenderer, initCanvas} from '../render/canvas.ts'
 import type { AudioAnalysis } from '../audio/audioProcessor'
-import {DebugGame} from "../games/debugGame.ts";
 import JSX from "src/jsx.ts";
+import {DinoGame} from "src/games/dinoGame.ts";
+import {Input} from "../input/input.ts";
 
 // Implementation for the game screen
 // This is the main screen where the game is played
@@ -108,11 +109,19 @@ export function startPlayback(ctx: AudioContext, buffer: AudioBuffer) {
   return { source, startTime }
 }
 
-const games = [DebugGame]
+const games = [DinoGame]
 
 export function createGameRenderer(runtime: GameRuntime): CanvasRenderer {
   let currentGame = -1
-  let wasPlying = false
+
+  // Dead-screen state: when a game dies we first require the user to release the Up input (y <= 0),
+  // then wait 3 seconds, then accept Up (y > 0) to restart the same game.
+  let deadInfo: { active: boolean; waitingForRelease: boolean; releaseTimestamp: number; cooldownUntil: number } = {
+    active: false,
+    waitingForRelease: false,
+    releaseTimestamp: 0,
+    cooldownUntil: 0
+  }
 
   function nextGame() {
     currentGame = (currentGame + 1) % games.length
@@ -124,7 +133,11 @@ export function createGameRenderer(runtime: GameRuntime): CanvasRenderer {
     if (games[currentGame].state != 'Initialized') {
       throw new Error(`Game ${games[currentGame].id} did not initialize`)
     }
-    wasPlying = true
+    // reset dead-screen when switching/starting a game
+    deadInfo.active = false
+    deadInfo.waitingForRelease = false
+    deadInfo.releaseTimestamp = 0
+    deadInfo.cooldownUntil = 0
     console.log(`Game ${games[currentGame].id} initialized`)
   }
 
@@ -145,23 +158,63 @@ export function createGameRenderer(runtime: GameRuntime): CanvasRenderer {
           nextGame()
           break
         case 'Dead':
-          if (wasPlying) runtime.audioCtx.suspend()
-          wasPlying = false
+          const sample = Input.sample()
+          const y = sample[1]
+
+          // Initialize dead-info on first frame we see Dead
+          if (!deadInfo.active) {
+            runtime.audioCtx.suspend()
+            runtime.source.stop()
+            deadInfo.active = true
+            deadInfo.waitingForRelease = y > 0
+            deadInfo.releaseTimestamp = timestamp
+            deadInfo.cooldownUntil = timestamp + 3000
+          }
+
+          // Darken the screen
           ctx.fillStyle = 'rgba(255,0,0,0.3)'
           ctx.fillRect(0, 0, cssW, cssH)
           ctx.fillStyle = 'white'
           ctx.textAlign = 'center'
           ctx.font = '96px system-ui, sans-serif'
-          ctx.fillText('Game Over', cssW / 2, cssH / 2)
-          ctx.font = '48px system-ui, sans-serif'
-          ctx.fillText('Press space to restart', cssW / 2, cssH / 2 + 48)
-          break
-        default:
-          throw new Error(`Unknown game state: ${games[currentGame].state}`)
-        case 'Playing':
-          games[currentGame].update(timestamp, deltaTime)
-          break
-      }
-    }
-  }
-}
+          ctx.fillText('Game Over', cssW / 2, cssH / 2 - 36)
+
+          // Flow: wait for release (y<=0) -> start 3s cooldown -> accept up (y>0) to restart
+          ctx.font = '28px system-ui, sans-serif'
+          if (deadInfo.waitingForRelease) {
+            // waiting for the user to release Up
+            ctx.fillText('Release Up to start 3s timer to enable restart', cssW / 2, cssH / 2 + 8)
+            if (y <= 0) {
+              deadInfo.waitingForRelease = false
+              deadInfo.releaseTimestamp = timestamp
+              deadInfo.cooldownUntil = timestamp + 3000
+            }
+          } else if (timestamp < deadInfo.cooldownUntil) {
+            const remaining = Math.ceil((deadInfo.cooldownUntil - timestamp) / 1000)
+            ctx.fillText(`Ready in ${remaining}s…`, cssW / 2, cssH / 2 + 8)
+          } else {
+            ctx.fillText('Press Up to restart', cssW / 2, cssH / 2 + 8)
+            if (y > 0) {
+              // Restart the same game and restart audio
+              deadInfo.active = false
+              runtime.audioCtx.resume().then(() => {
+                const { source, startTime } = startPlayback(runtime.audioCtx, runtime.source.buffer!)
+                runtime.source = source
+                runtime.startTime = startTime
+                games[currentGame].init(runtime)
+                runtime.source.start()
+              })
+            }
+          }
+           break
+         default:
+           throw new Error(`Unknown game state: ${games[currentGame].state}`)
+         case 'Playing':
+           games[currentGame].update(timestamp, deltaTime)
+           // ensure deadInfo reset while playing
+           deadInfo.active = false
+           break
+       }
+     }
+   }
+ }
