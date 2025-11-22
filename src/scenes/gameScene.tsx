@@ -196,13 +196,14 @@ export function createGameRenderer(runtime: GameRuntime): CanvasRenderer {
             ctx.fillText('Press Up to restart', cssW / 2, cssH / 2 + 8)
             if (y > 0) {
               // Restart the same game and restart audio
+              console.log('Restarting game')
               deadInfo.active = false
               runtime.audioCtx.resume().then(() => {
                 const { source, startTime } = startPlayback(runtime.audioCtx, runtime.source.buffer!)
                 runtime.source = source
                 runtime.startTime = startTime
                 games[currentGame].init(runtime)
-                runtime.source.start()
+                console.log('Game restarted')
               })
             }
           }
