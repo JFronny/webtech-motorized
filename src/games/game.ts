@@ -1,16 +1,16 @@
-import type {GameRuntime} from "../scenes/gameScene.tsx";
+import type { GameRuntime } from "../scenes/gameScene";
 
-export type GameState = 'Finished' | 'Initialized' | 'Playing' | 'Dead'
+export type GameState = "Finished" | "Initialized" | "Playing" | "Dead";
 
 export interface Game {
-  id: string
+  id: string;
 
-  init(runtime: GameRuntime): void
-  render(ctx: CanvasRenderingContext2D, cssW: number, cssH: number): void
-  update(timestamp: number, deltaTime: number): void
+  init(runtime: GameRuntime): void;
+  render(ctx: CanvasRenderingContext2D, cssW: number, cssH: number): void;
+  update(timestamp: number, deltaTime: number): void;
 
-  state: GameState
+  state: GameState;
 }
 
-export type Vec2 = [number, number]
-export type Rect = { l: number; r: number; t: number; b: number }
+export type Vec2 = [number, number];
+export type Rect = { l: number; r: number; t: number; b: number };

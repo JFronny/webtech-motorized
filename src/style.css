@@ -46,7 +46,7 @@ body {
   gap: 12px;
   align-items: center;
   justify-content: center;
-  height: 100vh
+  height: 100vh;
 }
 
 /* Full-viewport container for the canvas; background provides "black bars" on ultrawide */
@@ -169,10 +169,12 @@ h1 {
 .btn:hover {
   border-color: #646cff;
 }
-.btn:focus, .btn:focus-visible {
+.btn:focus,
+.btn:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
-.btn:disabled, .btn:has(input:disabled) {
+.btn:disabled,
+.btn:has(input:disabled) {
   cursor: not-allowed;
   color: var(--disabled-color);
 }

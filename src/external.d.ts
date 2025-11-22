@@ -2,8 +2,8 @@
 // Also see vite.config.js, tsconfig.json, and jsx.ts
 
 declare module JSX {
-  type Element = HTMLElement | Text
+  type Element = HTMLElement | Text;
   interface IntrinsicElements {
-    [elemName: string]: any
+    [elemName: string]: any;
   }
 }
