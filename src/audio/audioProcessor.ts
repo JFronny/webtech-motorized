@@ -2,6 +2,7 @@
 
 import { dwtHaarLevels } from "./dwt";
 import { meanRemove, movingAverage, normalize, toMono } from "./util";
+import { Abs, FFT } from "./fft";
 
 export type AudioAnalysis = {
   sampleRate: number;
@@ -9,6 +10,7 @@ export type AudioAnalysis = {
   intensities: number[]; // normalized 0..1 per frame
   frameSize: number; // samples per frame used for intensities
   peaks: number[]; // seconds of detected beat-like peaks
+  peakClasses: PeakClass[];
   bpm: number | null;
 };
 
@@ -171,6 +173,26 @@ function detectPeaks(intensities: number[], fps: number): number[] {
   return peaks;
 }
 
+export type PeakClass = 0 | 1 | 2;
+
+function classifyPeaks(peaks: number[], frameSize: number, data: Float32Array): PeakClass[] {
+  const peakClasses: PeakClass[] = [];
+  for (let peak of peaks) {
+    const fft = Abs(FFT(data.slice(peak, peak + frameSize)));
+    const bass = fft.slice(0, Math.floor(fft.length * 0.1)).reduce((a, b) => a + b, 0);
+    const mid = fft.slice(Math.floor(fft.length * 0.1), Math.floor(fft.length * 0.4)).reduce((a, b) => a + b, 0);
+    const treble = fft.slice(Math.floor(fft.length * 0.4)).reduce((a, b) => a + b, 0);
+    if (bass >= mid && bass >= treble) {
+      peakClasses.push(0); // bass
+    } else if (mid >= bass && mid >= treble) {
+      peakClasses.push(1); // mid
+    } else {
+      peakClasses.push(2); // treble
+    }
+  }
+  return peakClasses;
+}
+
 export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
   const frameSec = 1 / fps;
   const sampleRate = buffer.sampleRate;
@@ -194,6 +216,11 @@ export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
   const sumEnv = sumEnvelopes(envelopes);
   const { bpm } = autocorrelateForBpm(sumEnv, targetEnvRate, 40, 300);
   const peaks = detectPeaks(intensities, fps);
+  const peakClasses = classifyPeaks(peaks, frameSize, data);
+
+  if (peakClasses.length != peaks.length) throw new Error(
+    `Peak detection failed: ${peakClasses.length} classes, ${peaks.length} peaks`
+  )
 
   return {
     sampleRate,
@@ -201,6 +228,7 @@ export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
     intensities,
     frameSize,
     peaks,
-    bpm: bpm,
+    bpm,
+    peakClasses
   };
 }
