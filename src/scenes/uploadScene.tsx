@@ -2,6 +2,7 @@ import { analyzeAudio, type AudioAnalysis } from "../audio/audioProcessor";
 import { isWebGLAvailable } from "../render/glUtils";
 import { Input } from "../input/input";
 import JSX from "src/jsx";
+import { initGameScreen } from "src/scenes/gameScene.tsx";
 
 // Implementation for the upload screen
 // This is the first screen the user sees when starting the app
@@ -9,9 +10,7 @@ import JSX from "src/jsx";
 
 export type Audio = { ctx: AudioContext; buffer: AudioBuffer; analysis: AudioAnalysis };
 
-export type UploadComplete = (audio: Audio) => void | Promise<void>;
-
-export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) {
+export function initUploadScreen(root: HTMLElement) {
   let inputSelect = (
     <select
       onchange={(e: Event) => {
@@ -24,7 +23,7 @@ export function initUploadScreen(root: HTMLElement, onComplete: UploadComplete) 
     <button
       onclick={async (_: any) => {
         unregister();
-        await onComplete(audio!);
+        await initGameScreen(root, audio!);
       }}
       class="btn"
       disabled

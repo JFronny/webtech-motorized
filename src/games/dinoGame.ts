@@ -183,7 +183,7 @@ class DinoGameImpl implements Game {
     const spawnLead = 0.5 / this.speed + 0.05;
     while (this.nextPeakIndex < this.peaks.length) {
       const peakT = this.peaks[this.nextPeakIndex];
-      if (peakT > this.endTime! - this.startTime! - 0.5) break;
+      if (peakT > this.endTime! - this.startTime! - spawnLead) break;
       if (peakT < nowSec) {
         this.nextPeakIndex++;
         continue;

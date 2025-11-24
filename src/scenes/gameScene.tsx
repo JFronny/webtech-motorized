@@ -39,7 +39,12 @@ export async function initGameScreen(root: HTMLElement, audio: Audio) {
     analysis,
     endTime: 0, // set in createGameRenderer() via nextGame()
   };
-  controller.setRenderer(createGameRenderer(runtime, () => initWinScreen(root)));
+  controller.setRenderer(
+    createGameRenderer(runtime, () => {
+      controller.stop();
+      initWinScreen(root);
+    }),
+  );
 
   // Fullscreen change handler: show canvas when in fullscreen (on small devices),
   // hide canvas and show overlay when leaving fullscreen.
@@ -122,7 +127,7 @@ const games = [DinoGame];
 
 export function createGameRenderer(runtime: GameRuntime, onWin: () => void): CanvasRenderer {
   let currentGame = -1;
-  let gameCount = -1
+  let gameCount = -1;
 
   let deadInfo: { active: boolean; waitingForRelease: boolean; releaseTimestamp: number; cooldownUntil: number } = {
     active: false,
@@ -178,7 +183,7 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
             nextGame();
           } else {
             // finished, player won the game
-            onWin()
+            onWin();
           }
           break;
         case "Dead":
@@ -225,6 +230,8 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
                 const { source, startTime } = startPlayback(runtime.audioCtx, runtime.source.buffer!);
                 runtime.source = source;
                 runtime.startTime = startTime;
+                currentGame = 0;
+                gameCount = 0;
                 games[currentGame].init(runtime);
                 deadInfo.active = false;
                 console.log("Game restarted");

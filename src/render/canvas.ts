@@ -185,7 +185,7 @@ export function initCanvas(container: HTMLDivElement): CanvasController {
       gl.drawArrays(gl.TRIANGLES, 0, 6);
     }
 
-    raf = requestAnimationFrame(render);
+    if (running) raf = requestAnimationFrame(render);
   }
 
   function startRendering() {
