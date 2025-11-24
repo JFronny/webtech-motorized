@@ -128,6 +128,7 @@ const games = [DinoGame];
 export function createGameRenderer(runtime: GameRuntime, onWin: () => void): CanvasRenderer {
   let currentGame = -1;
   let gameCount = -1;
+  let isRestarting = false;
 
   let deadInfo: { active: boolean; waitingForRelease: boolean; releaseTimestamp: number; cooldownUntil: number } = {
     active: false,
@@ -148,7 +149,7 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
     currentGame = (currentGame + 1) % games.length;
     gameCount++;
     console.log(`Switching to game ${games[currentGame].id}`);
-    if (games[currentGame].state != "Finished") {
+    if (games[currentGame].state != "Finished" && games[currentGame].state != "Dead") {
       throw new Error(`Game ${games[currentGame].id} is not finished`);
     }
     runtime.endTime = runtime.startTime + nextGameDuration();
@@ -164,6 +165,21 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
     console.log(`Game ${games[currentGame].id} initialized`);
   }
 
+  function restart() {
+    console.log("Restarting game");
+    isRestarting = true; // hack: fixes firefox
+    runtime.audioCtx.resume().then(() => {
+      const { source, startTime } = startPlayback(runtime.audioCtx, runtime.source.buffer!);
+      runtime.source = source;
+      runtime.startTime = startTime;
+      currentGame = -1;
+      gameCount = -1;
+      nextGame();
+      isRestarting = false;
+      console.log("Game restarted");
+    });
+  }
+
   nextGame();
 
   return {
@@ -175,6 +191,7 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
       timestamp: number,
       deltaTime: number,
     ): void {
+      if (isRestarting) return;
       games[currentGame].render(ctx, cssW, cssH);
       switch (games[currentGame].state) {
         case "Finished":
@@ -192,8 +209,9 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
 
           // Initialize dead-info on first frame we see Dead
           if (!deadInfo.active) {
-            runtime.audioCtx.suspend().then(() => console.log("Audio suspended"));
             runtime.source.stop();
+            runtime.source.disconnect();
+            runtime.audioCtx.suspend().then(() => console.log("Audio suspended"));
             deadInfo.active = true;
             deadInfo.waitingForRelease = y > 0;
             deadInfo.releaseTimestamp = timestamp;
@@ -223,20 +241,7 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
             ctx.fillText(`Ready in ${remaining}s…`, cssW / 2, cssH / 2 + 8);
           } else {
             ctx.fillText("Press Up to restart", cssW / 2, cssH / 2 + 8);
-            if (y > 0) {
-              // Restart the same game and restart audio
-              console.log("Restarting game");
-              runtime.audioCtx.resume().then(() => {
-                const { source, startTime } = startPlayback(runtime.audioCtx, runtime.source.buffer!);
-                runtime.source = source;
-                runtime.startTime = startTime;
-                currentGame = 0;
-                gameCount = 0;
-                games[currentGame].init(runtime);
-                deadInfo.active = false;
-                console.log("Game restarted");
-              });
-            }
+            if (y > 0) restart();
           }
           break;
         default:
