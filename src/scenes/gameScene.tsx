@@ -167,7 +167,7 @@ export function createGameRenderer(runtime: GameRuntime): CanvasRenderer {
 
           // Initialize dead-info on first frame we see Dead
           if (!deadInfo.active) {
-            runtime.audioCtx.suspend();
+            runtime.audioCtx.suspend().then(() => console.log("Audio suspended"));
             runtime.source.stop();
             deadInfo.active = true;
             deadInfo.waitingForRelease = y > 0;
@@ -201,12 +201,12 @@ export function createGameRenderer(runtime: GameRuntime): CanvasRenderer {
             if (y > 0) {
               // Restart the same game and restart audio
               console.log("Restarting game");
-              deadInfo.active = false;
               runtime.audioCtx.resume().then(() => {
                 const { source, startTime } = startPlayback(runtime.audioCtx, runtime.source.buffer!);
                 runtime.source = source;
                 runtime.startTime = startTime;
                 games[currentGame].init(runtime);
+                deadInfo.active = false;
                 console.log("Game restarted");
               });
             }

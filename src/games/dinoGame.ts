@@ -22,7 +22,7 @@ function chooseObstacleLane(analysis: AudioAnalysis, t: number): "low" | "high" 
     count++;
   }
   const avg = count ? sum / count : 0;
-  if (avg > 0.4) return "low"; // loud -> ground obstacle
+  if (avg > 0.3) return "low"; // loud -> ground obstacle
   if (avg > 0.1) return "high"; // quieter -> flying obstacle
   return "none";
 }
