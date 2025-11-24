@@ -91,7 +91,7 @@ class DebugGameImpl implements Game {
     for (let i = 0; i < this.peaks!.length; i++) {
       const t = this.peaks![i];
       if (t < startTimeSec || t > endTimeSec) continue;
-      const x = Math.round(centerX + (t - nowSec) * this.pixelsPerSecond) + 0.5; // crisp line
+      const x = Math.round(centerX + (t - nowSec) * this.pixelsPerSecond) + 0.5;
       ctx.beginPath();
       ctx.moveTo(x, midY - cssH * 0.4);
       ctx.lineTo(x, midY + cssH * 0.35);

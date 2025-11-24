@@ -13,6 +13,7 @@ Then host the contents of the `dist` folder under the path `/webtech-motorized/`
 - evolution once again (big data)
 - unglued (big data)
 - lent (autoheart)
+- hardware store (weird al)
 
 ## This repository
 - no external (run-time) dependencies

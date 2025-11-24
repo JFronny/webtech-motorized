@@ -42,6 +42,7 @@ class DinoGameImpl implements Game {
   // Runtime
   private audioCtx: AudioContext | undefined;
   private startTime: number | undefined;
+  private endTime: number | undefined;
   private analysis: AudioAnalysis | undefined;
   private peaks: number[] | undefined;
   private nextPeakIndex = 0;
@@ -57,6 +58,7 @@ class DinoGameImpl implements Game {
   init(runtime: GameRuntime): void {
     this.audioCtx = runtime.audioCtx;
     this.startTime = runtime.startTime;
+    this.endTime = runtime.endTime;
     this.analysis = runtime.analysis;
     this.peaks = runtime.analysis.peaks;
     // position nextPeakIndex at first future peak
@@ -133,6 +135,16 @@ class DinoGameImpl implements Game {
       const hpx = Math.round((r.b - r.t) * pxH);
       ctx.fillRect(xpx, ypx, wpx, hpx);
     }
+
+    // Draw end time line
+    const endXNorm = (this.endTime! - this.audioCtx!.currentTime) * this.speed;
+    const endXpx = Math.round(endXNorm * pxW);
+    ctx.strokeStyle = "red";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(endXpx, 0);
+    ctx.lineTo(endXpx, pxH);
+    ctx.stroke();
   }
 
   update(_timestamp: number, deltaTime: number): void {
@@ -171,6 +183,7 @@ class DinoGameImpl implements Game {
     const spawnLead = 0.5 / this.speed + 0.05;
     while (this.nextPeakIndex < this.peaks.length) {
       const peakT = this.peaks[this.nextPeakIndex];
+      if (peakT > this.endTime! - this.startTime! - 0.5) break;
       if (peakT < nowSec) {
         this.nextPeakIndex++;
         continue;
@@ -200,6 +213,11 @@ class DinoGameImpl implements Game {
         this.state = "Dead";
         break;
       }
+    }
+
+    // Win condition
+    if (this.audioCtx.currentTime > this.endTime! - 0.5) {
+      this.state = "Finished";
     }
   }
 }
