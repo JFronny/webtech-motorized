@@ -8,7 +8,11 @@ type Obstacle = {
   lane: "low" | "high";
 };
 
-function chooseObstacleLane(analysis: AudioAnalysis, peakIndex: number, peaksByClass: number[]): "low" | "high" | "none" {
+function chooseObstacleLane(
+  analysis: AudioAnalysis,
+  peakIndex: number,
+  peaksByClass: number[],
+): "low" | "high" | "none" {
   const t = analysis.peaks[peakIndex];
   const frameSec = analysis.frameSize / analysis.sampleRate;
   const fps = 1 / frameSec;
@@ -27,7 +31,6 @@ function chooseObstacleLane(analysis: AudioAnalysis, peakIndex: number, peaksByC
   const selfCount = peaksByClass[peakClass];
   const otherCount1 = peaksByClass[(peakClass + 1) % 3];
   const otherCount2 = peaksByClass[(peakClass + 2) % 3];
-  console.log(peakClass, selfCount, otherCount1, otherCount2);
   return selfCount > otherCount1 && selfCount > otherCount2 ? "low" : "high";
 }
 

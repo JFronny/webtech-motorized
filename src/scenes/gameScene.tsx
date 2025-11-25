@@ -2,6 +2,7 @@ import { type CanvasRenderer, initCanvas } from "../render/canvas";
 import type { AudioAnalysis } from "../audio/audioProcessor";
 import JSX from "src/jsx";
 import { DinoGame } from "src/games/dinoGame";
+import { MovementGame } from "../games/movementGame";
 import { Input } from "../input/input";
 import type { Audio } from "src/scenes/uploadScene";
 import { initWinScreen } from "src/scenes/winScene.tsx";
@@ -123,7 +124,7 @@ export function startPlayback(ctx: AudioContext, buffer: AudioBuffer) {
   return { source, startTime };
 }
 
-const games = [DinoGame];
+const games = [DinoGame, MovementGame];
 
 export function createGameRenderer(runtime: GameRuntime, onWin: () => void): CanvasRenderer {
   let currentGame = -1;
@@ -138,11 +139,11 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
   };
 
   function nextGameDuration() {
-    const desiredSeconds = 15;
+    const desiredSeconds = 10;
     const bpm = Math.max(1, runtime.analysis?.bpm || 120);
     const secondsPerBeat = 60 / bpm;
     const beats = Math.max(1, Math.round(desiredSeconds / secondsPerBeat));
-    return Math.min(runtime.source.buffer!.duration, gameCount * beats * secondsPerBeat);
+    return Math.min(runtime.source.buffer!.duration, (gameCount + 1) * beats * secondsPerBeat);
   }
 
   function nextGame() {

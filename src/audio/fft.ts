@@ -23,9 +23,8 @@ SOFTWARE.
 */
 
 export function FFT(signal: Float32Array | ComplexFloat32Array): ComplexFloat32Array {
-  if (!(signal instanceof ComplexFloat32Array)) signal = new ComplexFloat32Array(signal)
-  if (signal.length === 1)
-    return signal;
+  if (!(signal instanceof ComplexFloat32Array)) signal = new ComplexFloat32Array(signal);
+  if (signal.length === 1) return signal;
   const halfLength = signal.length / 2;
   let even: ComplexFloat32Array = new ComplexFloat32Array(new Float32Array(halfLength));
   let odd: ComplexFloat32Array = new ComplexFloat32Array(new Float32Array(halfLength));
@@ -38,13 +37,13 @@ export function FFT(signal: Float32Array | ComplexFloat32Array): ComplexFloat32A
   even = FFT(even);
   odd = FFT(odd);
   for (let k = 0; k < halfLength; ++k) {
-    const a = Math.cos(2 * Math.PI * k / signal.length);
-    const b = Math.sin(-2 * Math.PI * k / signal.length);
+    const a = Math.cos((2 * Math.PI * k) / signal.length);
+    const b = Math.sin((-2 * Math.PI * k) / signal.length);
     //var sigma_k = new Complex(Math.cos(2 * Math.PI * k / signal.length), Math.sin(-2 * Math.PI * k / signal.length));
     const temp_k_real = odd.re[k] * a - odd.im[k] * b;
     const temp_k_imag = odd.re[k] * b + odd.im[k] * a;
     signal.re[k] = even.re[k] + temp_k_real;
-    signal.im[k] = even.im[k] + temp_k_imag
+    signal.im[k] = even.im[k] + temp_k_imag;
     signal.re[k + halfLength] = even.re[k] - temp_k_real;
     signal.im[k + halfLength] = even.im[k] - temp_k_imag;
   }
@@ -66,7 +65,8 @@ export class ComplexFloat32Array {
   constructor(re: Float32Array, im: Float32Array | null = null) {
     this.re = re;
     this.im = im || new Float32Array(re.length);
-    if (re.length != this.im.length) throw new Error(`Incompatible arrays: ${re.length} == re.length != im.length == ${this.im.length}`);
+    if (re.length != this.im.length)
+      throw new Error(`Incompatible arrays: ${re.length} == re.length != im.length == ${this.im.length}`);
   }
 
   get length(): number {

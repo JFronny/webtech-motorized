@@ -115,7 +115,6 @@ function detectPeaksFromEnvelope(env: Float32Array, sumEnv: Float32Array, envRat
   for (let i = 1; i < n - 1; i++) {
     const isMax = env[i] > env[i - 1] && env[i] >= env[i + 1];
     if (!isMax) continue;
-    console.log(env[i], avg[i]);
     if (Math.abs(env[i]) < Math.abs(avg[i]) * 1.8) continue;
     // check refractory: last peak must be at least win samples behind
     const last = peaksSec.length ? Math.round(peaksSec[peaksSec.length - 1] * envRate) : -win - 1;
@@ -218,9 +217,8 @@ export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
   const peaks = detectPeaks(intensities, fps);
   const peakClasses = classifyPeaks(peaks, frameSize, data);
 
-  if (peakClasses.length != peaks.length) throw new Error(
-    `Peak detection failed: ${peakClasses.length} classes, ${peaks.length} peaks`
-  )
+  if (peakClasses.length != peaks.length)
+    throw new Error(`Peak detection failed: ${peakClasses.length} classes, ${peaks.length} peaks`);
 
   return {
     sampleRate,
@@ -229,6 +227,6 @@ export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
     frameSize,
     peaks,
     bpm,
-    peakClasses
+    peakClasses,
   };
 }
