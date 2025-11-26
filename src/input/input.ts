@@ -8,12 +8,12 @@ import type { Vec2 } from "src/games/game";
 // Each device returns a single normalized 2d vector.
 // This allows for maximum compatibility, including using a device orientation sensor on mobile.
 
-export type DeviceAttribute = "imprecise" | "integer";
-
 export interface InputDeviceInfo {
   id: string;
   name: string;
-  attributes: DeviceAttribute[];
+  isContinuous: boolean;
+  precision: number; // (0, 1) - the threshold at which an input should be considered to be intended
+  slow: boolean; // whether the device is slow to use (e.g. orientation sensor)
 }
 
 export interface InputDevice extends InputDeviceInfo {
@@ -144,9 +144,16 @@ class InputManagerImpl {
     if (this.devices.has(id)) this.activeId = id;
   }
 
-  hasAttribute(attr: DeviceAttribute): boolean {
-    if (!this.activeId) return false;
-    return this.devices.get(this.activeId)?.attributes?.includes(attr) ?? false;
+  isContinuous(): boolean {
+    return this.devices.get(this.activeId ?? "")?.isContinuous ?? false;
+  }
+
+  getPrecision(): number {
+    return this.devices.get(this.activeId ?? "")?.precision ?? 0.1;
+  }
+
+  isSlow(): boolean {
+    return this.devices.get(this.activeId ?? "")?.slow ?? false;
   }
 
   sample(): Vec2 {

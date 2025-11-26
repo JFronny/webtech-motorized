@@ -1,11 +1,14 @@
-import type { InputDevice, DeviceAttribute } from "./input";
-import { clamp, norm2 } from "./util";
+import type { InputDevice } from "./input";
+import { clamp } from "./util";
 import type { Vec2 } from "src/games/game";
 
 export class TouchDevice implements InputDevice {
   readonly id = "touch";
   readonly name = "Touch (first finger)";
-  readonly attributes: DeviceAttribute[] = [];
+  readonly isContinuous: boolean = true;
+  readonly precision: number = 0.3;
+  readonly slow: boolean = false;
+
   private touchId: number | null = null;
   private px = 0;
   private py = 0;
@@ -63,7 +66,7 @@ export class TouchDevice implements InputDevice {
     // Map to [-1, 1] with origin in center, y up positive
     const x = clamp((this.px - cx) / cx, -1, 1);
     const y = clamp((cy - this.py) / cy, -1, 1);
-    return norm2(x, y);
+    return [x, y];
   }
 
   dispose() {

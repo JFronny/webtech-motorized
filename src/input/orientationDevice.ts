@@ -1,5 +1,5 @@
-import type { InputDevice, DeviceAttribute } from "./input";
-import { clamp, norm2 } from "./util";
+import type { InputDevice } from "./input";
+import { clamp } from "./util";
 import type { Vec2 } from "src/games/game";
 
 // I have validate that only one instance of this class is ever created,
@@ -12,7 +12,9 @@ let lastOrientation: DeviceOrientationEvent | null = null;
 export class OrientationDevice implements InputDevice {
   readonly id = "orientation";
   readonly name = "Device Orientation";
-  readonly attributes: DeviceAttribute[] = ["imprecise"];
+  readonly isContinuous: boolean = true;
+  readonly precision: number = 0.5;
+  readonly slow: boolean = false;
 
   constructor() {
     window.addEventListener("deviceorientation", this.onDeviceOrientation);
@@ -26,6 +28,6 @@ export class OrientationDevice implements InputDevice {
   sample(): Vec2 {
     const e = lastOrientation;
     if (!e) return [0, 0];
-    return norm2(clamp(e.beta! / 45, -1, 1), clamp(e.gamma! / 45 + 0.3, -1, 1));
+    return [clamp(e.beta! / 45, -1, 1), clamp(e.gamma! / 45 + 0.3, -1, 1)];
   }
 }

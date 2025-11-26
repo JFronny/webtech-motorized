@@ -1,12 +1,14 @@
-import type { InputDevice, DeviceAttribute } from "./input";
-import { clamp, norm2 } from "./util";
+import type { InputDevice } from "./input";
+import { clamp } from "./util";
 import type { Vec2 } from "src/games/game";
 
 export class GamepadDevice implements InputDevice {
-  readonly attributes: DeviceAttribute[] = [];
   readonly index: number;
   readonly id: string;
   readonly name: string;
+  readonly isContinuous: boolean = true;
+  readonly precision: number = 0.2;
+  readonly slow: boolean = false;
 
   constructor(index: number, id: string, name: string) {
     this.index = index;
@@ -33,6 +35,6 @@ export class GamepadDevice implements InputDevice {
     if (btn(13)) y -= 1; // down
     x = clamp(x, -1, 1);
     y = clamp(y, -1, 1);
-    return norm2(x, y);
+    return [x, y];
   }
 }

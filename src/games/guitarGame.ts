@@ -53,7 +53,7 @@ class GuitarGameImpl implements Game {
   init(runtime: GameRuntime): void {
     this.audioCtx = runtime.audioCtx;
     this.startTime = runtime.startTime;
-    this.endTime = runtime.endTime;
+    this.endTime = runtime.minigameEndTime;
     this.analysis = runtime.analysis;
     this.state = "Initialized";
 
@@ -91,7 +91,7 @@ class GuitarGameImpl implements Game {
     const sample = Input.sample();
 
     // For integer devices (keyboard), map up/down to specific lanes
-    if (Input.hasAttribute("integer")) {
+    if (!Input.isContinuous()) {
       const y = sample[1];
       if (y > 0.5) {
         // Up arrow -> lane 1 (second string from left)

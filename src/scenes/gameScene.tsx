@@ -1,12 +1,12 @@
 import { type CanvasRenderer, initCanvas } from "../render/canvas";
 import type { AudioAnalysis } from "../audio/audioProcessor";
 import JSX from "src/jsx";
-import { DinoGame } from "src/games/dinoGame";
 import { MovementGame } from "../games/movementGame";
 import { GuitarGame } from "../games/guitarGame";
 import { Input } from "../input/input";
 import type { Audio } from "src/scenes/uploadScene";
 import { initWinScreen } from "src/scenes/winScene.tsx";
+import { DinoGame } from "src/games/dinoGame.ts";
 
 // Implementation for the game screen
 // This is the main screen where the game is played
@@ -38,8 +38,9 @@ export async function initGameScreen(root: HTMLElement, audio: Audio) {
     audioCtx: ctx,
     source,
     startTime,
+    minigameStartTime: startTime,
     analysis,
-    endTime: 0, // set in createGameRenderer() via nextGame()
+    minigameEndTime: 0, // set in createGameRenderer() via nextGame()
   };
   controller.setRenderer(
     createGameRenderer(runtime, () => {
@@ -112,7 +113,8 @@ export type GameRuntime = {
   audioCtx: AudioContext;
   source: AudioBufferSourceNode;
   startTime: number; // audioCtx.currentTime at start()
-  endTime: number; // audioCtx.currentTime when the minigame switches to Finished state
+  minigameStartTime: number; // audioCtx.currentTime when the minigame starts
+  minigameEndTime: number; // audioCtx.currentTime when the minigame switches to Finished state
   analysis: AudioAnalysis;
 };
 
@@ -139,12 +141,12 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
     cooldownUntil: 0,
   };
 
-  function nextGameDuration() {
+  function gameDuration(idx: number): number {
     const desiredSeconds = 10;
     const bpm = Math.max(1, runtime.analysis?.bpm || 120);
     const secondsPerBeat = 60 / bpm;
     const beats = Math.max(1, Math.round(desiredSeconds / secondsPerBeat));
-    return Math.min(runtime.source.buffer!.duration, (gameCount + 1) * beats * secondsPerBeat);
+    return Math.min(runtime.source.buffer!.duration, idx * beats * secondsPerBeat);
   }
 
   function nextGame() {
@@ -154,7 +156,8 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
     if (games[currentGame].state != "Finished" && games[currentGame].state != "Dead") {
       throw new Error(`Game ${games[currentGame].id} is not finished`);
     }
-    runtime.endTime = runtime.startTime + nextGameDuration();
+    runtime.minigameStartTime = runtime.startTime + gameDuration(gameCount);
+    runtime.minigameEndTime = runtime.startTime + gameDuration(gameCount + 1);
     games[currentGame].init(runtime);
     if (games[currentGame].state != "Initialized") {
       throw new Error(`Game ${games[currentGame].id} did not initialize`);

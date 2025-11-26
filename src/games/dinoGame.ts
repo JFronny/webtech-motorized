@@ -60,7 +60,7 @@ class DinoGameImpl implements Game {
   init(runtime: GameRuntime): void {
     this.audioCtx = runtime.audioCtx;
     this.startTime = runtime.startTime;
-    this.endTime = runtime.endTime;
+    this.endTime = runtime.minigameEndTime;
     this.analysis = runtime.analysis;
     this.peaks = runtime.analysis.peaks;
     const peaksByClass = [0, 0, 0, 0, 0];
@@ -160,7 +160,7 @@ class DinoGameImpl implements Game {
 
     // Input
     const [_x, y] = Input.sample();
-    const threshold = Input.hasAttribute("imprecise") ? 0.4 : 0.3;
+    const threshold = Input.getPrecision();
 
     // Jump if up pressed and player on ground
     if (y > threshold && this.playerY <= 0.001) {

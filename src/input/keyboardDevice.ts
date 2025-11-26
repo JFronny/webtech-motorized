@@ -1,10 +1,13 @@
-import type { InputDevice, DeviceAttribute } from "./input";
+import type { InputDevice } from "./input";
 import type { Vec2 } from "src/games/game";
 
 export class KeyboardDevice implements InputDevice {
   readonly id = "keyboard";
   readonly name = "Keyboard (WASD / Arrows)";
-  readonly attributes: DeviceAttribute[] = ["integer"];
+  readonly isContinuous: boolean = false;
+  readonly precision: number = 0.1;
+  readonly slow: boolean = false;
+
   private keys = new Set<string>();
 
   constructor() {
@@ -30,9 +33,8 @@ export class KeyboardDevice implements InputDevice {
     if (this.keys.has("w") || this.keys.has("W") || this.keys.has("ArrowUp")) y += 1;
     if (this.keys.has("s") || this.keys.has("S") || this.keys.has("ArrowDown")) y -= 1;
     if (x === 0 && y === 0) return [0, 0];
-    // Normalize diagonals to magnitude 1
-    const l = Math.hypot(x, y);
-    return [x / l, y / l];
+    // Do not normalize to 1 to match touch device behavior
+    return [x, y];
   }
 
   dispose() {

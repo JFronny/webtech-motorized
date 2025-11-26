@@ -3,8 +3,10 @@ import type { GameRuntime } from "../scenes/gameScene";
 import { Input } from "../input/input";
 import type { AudioAnalysis } from "../audio/audioProcessor";
 
+type Direction = "up" | "down" | "left" | "right";
+
 type Move = {
-  direction: Vec2;
+  direction: Direction;
   time: number;
   position: Vec2;
   completed: boolean;
@@ -15,13 +17,14 @@ class MovementGameImpl implements Game {
   state: GameState = "Finished";
 
   private playerPosition: Vec2 = [0, 0];
-  private lastDirection: Vec2 = [0, 0];
+  private lastDirection: Direction | null = null;
   private cameraPosition: Vec2 = [0, 0];
   private moves: Move[] = [];
 
   // Runtime information
   private audioCtx: AudioContext | undefined;
   private startTime: number | undefined;
+  private minigameStartTime: number | undefined;
   private endTime: number | undefined;
   private analysis: AudioAnalysis | undefined;
 
@@ -29,21 +32,40 @@ class MovementGameImpl implements Game {
     return Math.abs(Math.sin(seed) * 10000) % 1;
   }
 
-  private getNextDirection(beat: { time: number; classification: number }): Vec2 {
+  private back(direction: Direction): Direction {
+    switch (direction) {
+      case "up":
+        return "down";
+      case "down":
+        return "up";
+      case "left":
+        return "right";
+      case "right":
+        return "left";
+    }
+  }
+
+  private toVec(direction: Direction): Vec2 {
+    switch (direction) {
+      case "up":
+        return [0, -1];
+      case "down":
+        return [0, 1];
+      case "left":
+        return [-1, 0];
+      case "right":
+        return [1, 0];
+    }
+  }
+
+  private getNextDirection(beat: { time: number; classification: number }): Direction {
     const seed = Math.floor(beat.time / 2);
-    let rand = this.prng(seed);
+    let rand = this.prng(seed + 1);
 
-    const possibleDirections: Vec2[] = [
-      [0, 1],
-      [0, -1],
-      [1, 0],
-      [-1, 0],
-    ];
+    const possibleDirections: Direction[] = ["up", "down", "right", "left"];
 
-    if (this.lastDirection[0] !== 0 || this.lastDirection[1] !== 0) {
-      const index = possibleDirections.findIndex(
-        (d) => d[0] === -this.lastDirection[0] && d[1] === -this.lastDirection[1],
-      );
+    if (this.lastDirection != undefined) {
+      const index = possibleDirections.findIndex((d) => d == this.back(this.lastDirection!));
       possibleDirections.splice(index, 1);
     }
 
@@ -55,13 +77,14 @@ class MovementGameImpl implements Game {
   init(runtime: GameRuntime): void {
     this.audioCtx = runtime.audioCtx;
     this.startTime = runtime.startTime;
-    this.endTime = runtime.endTime;
+    this.minigameStartTime = runtime.minigameStartTime;
+    this.endTime = runtime.minigameEndTime;
     this.analysis = runtime.analysis;
     this.state = "Initialized";
 
     // Reset state
     this.playerPosition = [0, 0];
-    this.lastDirection = [0, 0];
+    this.lastDirection = null;
     this.cameraPosition = [0, 0];
     this.moves = [];
 
@@ -77,7 +100,8 @@ class MovementGameImpl implements Game {
       // Create a pseudo-beat object for getNextDirection
       const beat = { time: peakTime, classification: 0 };
       const direction = this.getNextDirection(beat);
-      const newPosition: Vec2 = [lastPosition[0] + direction[0], lastPosition[1] + direction[1]];
+      const [dx, dy] = this.toVec(direction);
+      const newPosition: Vec2 = [lastPosition[0] + dx, lastPosition[1] + dy];
       this.moves.push({
         direction,
         time: peakTime,
@@ -96,15 +120,14 @@ class MovementGameImpl implements Game {
     const nowSec = Math.max(0, this.audioCtx!.currentTime - this.startTime!);
 
     // Adjust timing windows for slow devices (orientation)
-    const isSlow = Input.hasAttribute("imprecise");
-    const moveWindow = isSlow ? 0.5 : 0.3;
-    const gracePeriodAfterMove = isSlow ? 1 : 0.15;
-    const threshold = Input.hasAttribute("imprecise") ? 0.5 : 0.3;
+    const moveWindow = Input.isSlow() ? 0.6 : 0.3;
+    const gracePeriodAfterMove = Input.isSlow() ? 1 : 0.15;
+    const threshold = Input.getPrecision();
 
     // Find the current move (the first uncompleted move)
     let currentMoveIndex = -1;
     let previousMoveTime = -Infinity;
-    let previousMoveDirection: Vec2 | null = null;
+    let previousMoveDirection: Direction | null = null;
     for (let i = 0; i < this.moves.length; i++) {
       if (!this.moves[i].completed) {
         currentMoveIndex = i;
@@ -127,14 +150,24 @@ class MovementGameImpl implements Game {
     const timeToMove = currentMove.time - nowSec;
     const timeSincePreviousMove = nowSec - previousMoveTime;
 
-    const moveVec = Input.sample();
-    const hasInput = Math.abs(moveVec[0]) > threshold || Math.abs(moveVec[1]) > threshold;
-    const directionMatches = (movement: Vec2, direction: Vec2) =>
-      Math.abs(movement[0] - direction[0]) < threshold && Math.abs(movement[1] + direction[1]) < threshold;
+    const [movX, movY] = Input.sample();
+    const hasInput = Math.abs(movX) > threshold || Math.abs(movY) > threshold;
+    const directionMatches = (direction: Direction) => {
+      switch (direction) {
+        case "up":
+          return movY > threshold && Math.abs(movX) <= threshold;
+        case "down":
+          return movY < -threshold && Math.abs(movX) <= threshold;
+        case "left":
+          return movX < -threshold && Math.abs(movY) <= threshold;
+        case "right":
+          return movX > threshold && Math.abs(movY) <= threshold;
+      }
+    };
 
     // Check if we're within the input window
     if (timeToMove < moveWindow && timeToMove > -moveWindow) {
-      if (directionMatches(moveVec, currentMove.direction)) {
+      if (directionMatches(currentMove.direction)) {
         this.playerPosition = currentMove.position;
         currentMove.completed = true;
       }
@@ -149,12 +182,16 @@ class MovementGameImpl implements Game {
     // Players shouldn't be able to hold the input for too long after completing a move
     const outsideCurrentWindow = timeToMove > moveWindow || timeToMove < -moveWindow;
 
-    let inGracePeriod = false;
-    if (previousMoveDirection && timeSincePreviousMove <= gracePeriodAfterMove) {
-      inGracePeriod = directionMatches(moveVec, previousMoveDirection);
+    let inGracePeriod: boolean;
+    if (previousMoveDirection) {
+      inGracePeriod = timeSincePreviousMove <= gracePeriodAfterMove && directionMatches(previousMoveDirection);
+    } else {
+      inGracePeriod = this.audioCtx!.currentTime <= this.minigameStartTime! + gracePeriodAfterMove * 2;
     }
 
     if (hasInput && outsideCurrentWindow && !inGracePeriod) {
+      this.playerPosition[0] += movX;
+      this.playerPosition[1] -= movY;
       this.state = "Dead";
       return;
     }

@@ -3,6 +3,7 @@
 import { dwtHaarLevels } from "./dwt";
 import { meanRemove, movingAverage, normalize, toMono } from "./util";
 import { Abs, FFT } from "./fft";
+import { clamp } from "src/input/util.ts";
 
 export type AudioAnalysis = {
   sampleRate: number;
@@ -194,8 +195,8 @@ function classifyPeaks(peaks: number[], frameSize: number, data: Float32Array, s
 
     const bassEndHz = 250;
     const midEndHz = 4000;
-    const bassEnd = Math.max(1, Math.min(fftLength, Math.floor((bassEndHz * N) / sampleRate) - minBin));
-    const midEnd = Math.max(bassEnd + 1, Math.min(fftLength, Math.floor((midEndHz * N) / sampleRate) - minBin));
+    const bassEnd = clamp(Math.floor((bassEndHz * N) / sampleRate) - minBin, 1, fftLength);
+    const midEnd = clamp(Math.floor((midEndHz * N) / sampleRate) - minBin, bassEnd + 1, fftLength);
 
     let bass = 0;
     for (let i = 0; i < bassEnd; i++) bass += fft[i];
