@@ -3,16 +3,14 @@ import type { Game, GameState, Rect } from "src/games/game";
 import type { GameRuntime } from "src/scenes/gameScene";
 import { Input } from "src/input/input";
 
+type Lane = "high" | "low";
+
 type Obstacle = {
   t: number; // audio time of obstacle (seconds)
-  lane: "low" | "high";
+  lane: Lane;
 };
 
-function chooseObstacleLane(
-  analysis: AudioAnalysis,
-  peakIndex: number,
-  peaksByClass: number[],
-): "low" | "high" | "none" {
+function chooseObstacleLane(analysis: AudioAnalysis, peakIndex: number, lanesByClass: Lane[]): Lane | "none" {
   const t = analysis.peaks[peakIndex];
   const frameSec = analysis.frameSize / analysis.sampleRate;
   const fps = 1 / frameSec;
@@ -27,11 +25,7 @@ function chooseObstacleLane(
   }
   const avg = count ? sum / count : 0;
   if (avg < 0.1) return "none";
-  const peakClass = analysis.peakClasses[peakIndex];
-  const selfCount = peaksByClass[peakClass];
-  const otherCount1 = peaksByClass[(peakClass + 1) % 3];
-  const otherCount2 = peaksByClass[(peakClass + 2) % 3];
-  return selfCount > otherCount1 && selfCount > otherCount2 ? "low" : "high";
+  return lanesByClass[analysis.peakClasses[peakIndex]];
 }
 
 class DinoGameImpl implements Game {
@@ -52,7 +46,7 @@ class DinoGameImpl implements Game {
   private endTime: number | undefined;
   private analysis: AudioAnalysis | undefined;
   private peaks: number[] | undefined;
-  private peaksByClass: number[] | undefined;
+  private lanesByClass: Lane[] | undefined;
   private nextPeakIndex = 0;
 
   // Game state (normalized units)
@@ -69,10 +63,13 @@ class DinoGameImpl implements Game {
     this.endTime = runtime.endTime;
     this.analysis = runtime.analysis;
     this.peaks = runtime.analysis.peaks;
-    this.peaksByClass = [0, 0, 0];
+    const peaksByClass = [0, 0, 0, 0, 0];
     // Filtering this to the peaks relevant to the current segment would further improve accuracy
     // But this works well enough for almost all songs
-    for (let peak of runtime.analysis.peakClasses) this.peaksByClass[peak]++;
+    for (let peak of runtime.analysis.peakClasses) peaksByClass[peak]++;
+    const avgPeaksByClass = peaksByClass.reduce((a, b) => a + b, 0) / peaksByClass.length;
+    this.lanesByClass = peaksByClass.map((count) => (count > avgPeaksByClass * 0.9 ? "low" : "high"));
+
     // position nextPeakIndex at first future peak
     const now = Math.max(0, this.audioCtx!.currentTime - this.startTime!);
     this.nextPeakIndex = 0;
@@ -195,7 +192,7 @@ class DinoGameImpl implements Game {
       }
       if (peakT - nowSec > spawnLead) break;
       // decide lane
-      const lane = chooseObstacleLane(this.analysis, this.nextPeakIndex, this.peaksByClass!);
+      const lane = chooseObstacleLane(this.analysis, this.nextPeakIndex, this.lanesByClass!);
       if (lane !== "none") {
         this.obstacles.push({ t: peakT, lane });
       }

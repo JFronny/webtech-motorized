@@ -108,7 +108,15 @@ class DebugGameImpl implements Game {
       const x = Math.round(centerX + (t - nowSec) * this.pixelsPerSecond) + 0.5;
       ctx.beginPath();
       ctx.moveTo(x, midY - cssH * 0.4);
-      ctx.lineTo(x, midY + cssH * 0.35);
+      ctx.lineTo(x, midY + cssH * 0.4);
+      ctx.stroke();
+      const peakClass = this.analysis!.peakClasses[i];
+      const y = midY - ((peakClass - 2) / 2) * cssH * 0.4;
+      ctx.beginPath();
+      ctx.moveTo(x - 10, y - 10);
+      ctx.lineTo(x + 10, y + 10);
+      ctx.moveTo(x - 10, y + 10);
+      ctx.lineTo(x + 10, y - 10);
       ctx.stroke();
     }
 

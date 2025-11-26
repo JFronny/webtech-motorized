@@ -182,12 +182,20 @@ function classifyPeaks(peaks: number[], frameSize: number, data: Float32Array, s
     if (endSample > data.length) continue;
 
     const segment = data.slice(startSample, endSample);
-    console.log("FFT:", segment);
-    const fft = Abs(FFT(segment));
+    const fftFull = Abs(FFT(segment));
+    const N = segment.length;
+    const nyquist = sampleRate / 2;
+    const lowHz = 20;
+    const highHz = Math.min(20000, nyquist);
+    const minBin = Math.max(0, Math.ceil((lowHz * N) / sampleRate));
+    const maxBin = Math.min(Math.floor((highHz * N) / sampleRate), Math.floor(N / 2));
+    const fft = fftFull.slice(minBin, maxBin + 1);
     const fftLength = fft.length;
 
-    const bassEnd = Math.floor(fftLength * 0.2);
-    const midEnd = Math.floor(fftLength * 0.5);
+    const bassEndHz = 250;
+    const midEndHz = 4000;
+    const bassEnd = Math.max(1, Math.min(fftLength, Math.floor((bassEndHz * N) / sampleRate) - minBin));
+    const midEnd = Math.max(bassEnd + 1, Math.min(fftLength, Math.floor((midEndHz * N) / sampleRate) - minBin));
 
     let bass = 0;
     for (let i = 0; i < bassEnd; i++) bass += fft[i];

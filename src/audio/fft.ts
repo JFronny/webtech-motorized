@@ -39,7 +39,6 @@ export function FFT(signal: Float32Array | ComplexFloat32Array): ComplexFloat32A
   for (let k = 0; k < halfLength; ++k) {
     const a = Math.cos((2 * Math.PI * k) / signal.length);
     const b = Math.sin((-2 * Math.PI * k) / signal.length);
-    //var sigma_k = new Complex(Math.cos(2 * Math.PI * k / signal.length), Math.sin(-2 * Math.PI * k / signal.length));
     const temp_k_real = odd.re[k] * a - odd.im[k] * b;
     const temp_k_imag = odd.re[k] * b + odd.im[k] * a;
     signal.re[k] = even.re[k] + temp_k_real;
@@ -51,7 +50,6 @@ export function FFT(signal: Float32Array | ComplexFloat32Array): ComplexFloat32A
 }
 
 export function Abs(array: ComplexFloat32Array): Float32Array {
-  console.log(array);
   const result = new Float32Array(array.length);
   for (let i = 0; i < array.length; ++i) {
     result[i] = Math.sqrt(array.re[i] * array.re[i] + array.im[i] * array.im[i]);

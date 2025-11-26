@@ -40,7 +40,7 @@ class GuitarGameImpl implements Game {
   private getLaneForPeak(peakIndex: number): Lane {
     const peakClass = this.analysis?.peakClasses[peakIndex] ?? 0;
     const seed = peakIndex * 7 + peakClass * 3;
-    return Math.min(Math.max(0, Math.round(peakClass + this.prng(seed) % 1)), 4) as Lane;
+    return Math.min(Math.max(0, Math.round(peakClass + (this.prng(seed) % 1))), 4) as Lane;
   }
 
   private laneToX(lane: Lane): number {
@@ -147,7 +147,7 @@ class GuitarGameImpl implements Game {
     const timeToY = (timeDiff: number) => {
       const progress = 1 - timeDiff / this.FALL_DURATION;
       return -this.SCREEN_HEIGHT / 2 + progress * (paddleY + this.SCREEN_HEIGHT / 2);
-    }
+    };
 
     // Draw lane dividers
     ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
