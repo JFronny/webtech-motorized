@@ -1,9 +1,9 @@
-import type { InputDevice, InputDeviceType } from "./input";
+import type { InputDevice, DeviceAttribute } from "./input";
 import { clamp, norm2 } from "./util";
 import type { Vec2 } from "src/games/game";
 
 export class GamepadDevice implements InputDevice {
-  readonly type: InputDeviceType = "gamepad";
+  readonly attributes: DeviceAttribute[] = [];
   readonly index: number;
   readonly id: string;
   readonly name: string;

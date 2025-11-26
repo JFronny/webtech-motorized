@@ -1,4 +1,4 @@
-import type { InputDevice, InputDeviceType } from "./input";
+import type { InputDevice, DeviceAttribute } from "./input";
 import { clamp, norm2 } from "./util";
 import type { Vec2 } from "src/games/game";
 
@@ -12,7 +12,7 @@ let lastOrientation: DeviceOrientationEvent | null = null;
 export class OrientationDevice implements InputDevice {
   readonly id = "orientation";
   readonly name = "Device Orientation";
-  readonly type: InputDeviceType = "orientation";
+  readonly attributes: DeviceAttribute[] = ["imprecise"];
 
   constructor() {
     window.addEventListener("deviceorientation", this.onDeviceOrientation);

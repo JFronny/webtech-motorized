@@ -162,17 +162,16 @@ class DinoGameImpl implements Game {
     const nowSec = Math.max(0, this.audioCtx.currentTime - this.startTime!);
 
     // Input
-    const sample = Input.sample();
-    const up = sample[1];
-    const down = -sample[1];
+    const [_x, y] = Input.sample();
+    const threshold = Input.hasAttribute("imprecise") ? 0.6 : 0.3;
 
     // Jump if up pressed and player on ground
-    if (up > 0.6 && this.playerY <= 0.001) {
+    if (y > threshold && this.playerY <= 0.001) {
       this.playerV = this.jumpV;
       this.playerY = 0.0001; // mark as airborne
     }
     // If down pressed, instantly drop to floor
-    if (down > 0.6) {
+    if (y < -threshold) {
       this.playerY = 0;
       this.playerV = 0;
     }

@@ -1,11 +1,11 @@
-import type { InputDevice, InputDeviceType } from "./input";
+import type { InputDevice, DeviceAttribute } from "./input";
 import { clamp, norm2 } from "./util";
 import type { Vec2 } from "src/games/game";
 
 export class TouchDevice implements InputDevice {
   readonly id = "touch";
   readonly name = "Touch (first finger)";
-  readonly type: InputDeviceType = "touch";
+  readonly attributes: DeviceAttribute[] = [];
   private touchId: number | null = null;
   private px = 0;
   private py = 0;

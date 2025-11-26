@@ -8,12 +8,12 @@ import type { Vec2 } from "src/games/game";
 // Each device returns a single normalized 2d vector.
 // This allows for maximum compatibility, including using a device orientation sensor on mobile.
 
-export type InputDeviceType = "keyboard" | "gamepad" | "touch" | "orientation";
+export type DeviceAttribute = "imprecise" | "integer";
 
 export interface InputDeviceInfo {
   id: string;
   name: string;
-  type: InputDeviceType;
+  attributes: DeviceAttribute[];
 }
 
 export interface InputDevice extends InputDeviceInfo {
@@ -133,7 +133,7 @@ class InputManagerImpl {
   }
 
   listDevices(): InputDeviceInfo[] {
-    return Array.from(this.devices.values()).map((d) => ({ id: d.id, name: d.name, type: d.type }));
+    return Array.from(this.devices.values());
   }
 
   getActiveId(): string | null {
@@ -142,6 +142,11 @@ class InputManagerImpl {
 
   setActive(id: string) {
     if (this.devices.has(id)) this.activeId = id;
+  }
+
+  hasAttribute(attr: DeviceAttribute): boolean {
+    if (!this.activeId) return false;
+    return this.devices.get(this.activeId)?.attributes?.includes(attr) ?? false;
   }
 
   sample(): Vec2 {

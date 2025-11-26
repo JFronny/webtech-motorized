@@ -95,8 +95,10 @@ class MovementGameImpl implements Game {
 
     const nowSec = Math.max(0, this.audioCtx!.currentTime - this.startTime!);
 
-    const moveWindow = 0.3; // 300ms window
-    const gracePeriodAfterMove = 0.15; // 150ms grace period after completing a move
+    // Adjust timing windows for slow devices (orientation)
+    const isSlow = Input.hasAttribute("imprecise");
+    const moveWindow = isSlow ? 0.5 : 0.3;
+    const gracePeriodAfterMove = isSlow ? 0.25 : 0.15;
 
     // Find the current move (the first uncompleted move)
     let currentMoveIndex = -1;

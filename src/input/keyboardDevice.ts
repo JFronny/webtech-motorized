@@ -1,10 +1,10 @@
-import type { InputDevice, InputDeviceType } from "./input";
+import type { InputDevice, DeviceAttribute } from "./input";
 import type { Vec2 } from "src/games/game";
 
 export class KeyboardDevice implements InputDevice {
   readonly id = "keyboard";
   readonly name = "Keyboard (WASD / Arrows)";
-  readonly type: InputDeviceType = "keyboard";
+  readonly attributes: DeviceAttribute[] = ["integer"];
   private keys = new Set<string>();
 
   constructor() {
