@@ -156,7 +156,7 @@ class MovementGameImpl implements Game {
       return;
     }
 
-    if (this.audioCtx!.currentTime > this.endTime! - 0.5) {
+    if (this.audioCtx!.currentTime > this.endTime!) {
       this.state = "Finished";
     }
   }

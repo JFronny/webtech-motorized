@@ -144,7 +144,7 @@ function detectPeaks(intensities: number[], fps: number): number[] {
   // Simple moving-average threshold + local maxima
   const window = Math.max(1, Math.round(fps * 0.5));
   const peaks: number[] = [];
-  const avgWin = Math.max(1, Math.round(fps * 1.0));
+  const avgWin = Math.max(1, Math.round(fps));
   let movingSum = 0;
   for (let i = 0; i < intensities.length; i++) {
     const val = intensities[i];
@@ -172,21 +172,57 @@ function detectPeaks(intensities: number[], fps: number): number[] {
   return peaks;
 }
 
-export type PeakClass = 0 | 1 | 2;
+export type PeakClass = 0 | 1 | 2 | 3 | 4;
 
-function classifyPeaks(peaks: number[], frameSize: number, data: Float32Array): PeakClass[] {
+function classifyPeaks(peaks: number[], frameSize: number, data: Float32Array, sampleRate: number): PeakClass[] {
   const peakClasses: PeakClass[] = [];
-  for (let peak of peaks) {
-    const fft = Abs(FFT(data.slice(peak, peak + frameSize)));
-    const bass = fft.slice(0, Math.floor(fft.length * 0.1)).reduce((a, b) => a + b, 0);
-    const mid = fft.slice(Math.floor(fft.length * 0.1), Math.floor(fft.length * 0.4)).reduce((a, b) => a + b, 0);
-    const treble = fft.slice(Math.floor(fft.length * 0.4)).reduce((a, b) => a + b, 0);
-    if (bass >= mid && bass >= treble) {
-      peakClasses.push(0); // bass
-    } else if (mid >= bass && mid >= treble) {
-      peakClasses.push(1); // mid
+  for (const peak of peaks) {
+    const startSample = Math.round(peak * sampleRate);
+    const endSample = startSample + frameSize;
+    if (endSample > data.length) continue;
+
+    const segment = data.slice(startSample, endSample);
+    console.log("FFT:", segment);
+    const fft = Abs(FFT(segment));
+    const fftLength = fft.length;
+
+    const bassEnd = Math.floor(fftLength * 0.2);
+    const midEnd = Math.floor(fftLength * 0.5);
+
+    let bass = 0;
+    for (let i = 0; i < bassEnd; i++) bass += fft[i];
+
+    let mid = 0;
+    for (let i = bassEnd; i < midEnd; i++) mid += fft[i];
+
+    let treble = 0;
+    for (let i = midEnd; i < fftLength; i++) treble += fft[i];
+
+    console.log("To Classify:", bass, mid, treble, fft.slice(0, 10));
+
+    const total = bass + mid + treble;
+
+    if (total === 0) {
+      peakClasses.push(0); // Default to bass if no energy
+      continue;
+    }
+
+    const bassNorm = bass / total;
+    const midNorm = mid / total;
+    const trebleNorm = treble / total;
+
+    if (bassNorm > 0.5) {
+      peakClasses.push(0); // Strong Bass
+    } else if (trebleNorm > 0.5) {
+      peakClasses.push(4); // Strong Treble
+    } else if (midNorm > 0.5) {
+      peakClasses.push(2); // Strong Mid
+    } else if (bassNorm > midNorm && bassNorm > trebleNorm) {
+      peakClasses.push(1); // Leaning Bass
+    } else if (trebleNorm > midNorm && trebleNorm > bassNorm) {
+      peakClasses.push(3); // Leaning Treble
     } else {
-      peakClasses.push(2); // treble
+      peakClasses.push(2); // Leaning Mid or balanced
     }
   }
   return peakClasses;
@@ -215,7 +251,7 @@ export function analyzeAudio(buffer: AudioBuffer, fps: number): AudioAnalysis {
   const sumEnv = sumEnvelopes(envelopes);
   const { bpm } = autocorrelateForBpm(sumEnv, targetEnvRate, 40, 300);
   const peaks = detectPeaks(intensities, fps);
-  const peakClasses = classifyPeaks(peaks, frameSize, data);
+  const peakClasses = classifyPeaks(peaks, frameSize, data, sampleRate);
 
   if (peakClasses.length != peaks.length)
     throw new Error(`Peak detection failed: ${peakClasses.length} classes, ${peaks.length} peaks`);

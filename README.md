@@ -29,3 +29,16 @@ Then host the contents of the `dist` folder under the path `/webtech-motorized/`
   - `src/render`: rendering logic using canvas and (if available) WebGL for post-processing
   - `src/scenes`: the HTML pages that make up the game
   - `src/games`: the actual minigames
+
+## Notes for evaluation
+
+1. Idea: I use the canvas API for rendering, WebGL for post-processing, the gamepad and orientation APIs for input, the web audio API for processing and playback, and the File API for loading songs.
+2. Code Quality: I use TypeScript for type safety and linting, as well as prettier for formatting.
+   This should ensure uniform formatting.
+   I used TSX for the HTML content which is not technically separated,
+   but this makes the code a lot less messy.
+3. Documentation: This README (specifically the section above) is intended to be an entry point. I have added comments to each major component to explain how they work and commented code where I deemed it helpful.
+4. Technical sophistication: According to tokei, the project contains more than 2000 lines of code at the time of writing.
+   I think the game engine and minigame implementations are sufficient to count here, even if the audio processing is not due to its origin (researching stackoverflow).
+5. Responsive: The game supports various input methods and adjusts the gameplay to fit them.
+   The main screen works well across devices and the canvas is scaled to fit the screen, including going into fullscreen on mobile to maximize its surface area.

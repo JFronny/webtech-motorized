@@ -3,6 +3,7 @@ import type { AudioAnalysis } from "../audio/audioProcessor";
 import JSX from "src/jsx";
 import { DinoGame } from "src/games/dinoGame";
 import { MovementGame } from "../games/movementGame";
+import { GuitarGame } from "../games/guitarGame";
 import { Input } from "../input/input";
 import type { Audio } from "src/scenes/uploadScene";
 import { initWinScreen } from "src/scenes/winScene.tsx";
@@ -124,7 +125,7 @@ export function startPlayback(ctx: AudioContext, buffer: AudioBuffer) {
   return { source, startTime };
 }
 
-const games = [DinoGame, MovementGame];
+const games = [DinoGame, MovementGame, GuitarGame];
 
 export function createGameRenderer(runtime: GameRuntime, onWin: () => void): CanvasRenderer {
   let currentGame = -1;

@@ -221,7 +221,7 @@ class DinoGameImpl implements Game {
     }
 
     // Win condition
-    if (this.audioCtx.currentTime > this.endTime! - 0.5) {
+    if (this.audioCtx.currentTime > this.endTime!) {
       this.state = "Finished";
     }
   }

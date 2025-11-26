@@ -24,8 +24,8 @@ SOFTWARE.
 
 export function FFT(signal: Float32Array | ComplexFloat32Array): ComplexFloat32Array {
   if (!(signal instanceof ComplexFloat32Array)) signal = new ComplexFloat32Array(signal);
-  if (signal.length === 1) return signal;
-  const halfLength = signal.length / 2;
+  if (signal.length <= 1) return signal;
+  const halfLength = signal.length >> 1; // ensures integer division. Shouldn't be necessary, but apparently it is.
   let even: ComplexFloat32Array = new ComplexFloat32Array(new Float32Array(halfLength));
   let odd: ComplexFloat32Array = new ComplexFloat32Array(new Float32Array(halfLength));
   for (let i = 0; i < halfLength; ++i) {
@@ -51,6 +51,7 @@ export function FFT(signal: Float32Array | ComplexFloat32Array): ComplexFloat32A
 }
 
 export function Abs(array: ComplexFloat32Array): Float32Array {
+  console.log(array);
   const result = new Float32Array(array.length);
   for (let i = 0; i < array.length; ++i) {
     result[i] = Math.sqrt(array.re[i] * array.re[i] + array.im[i] * array.im[i]);
