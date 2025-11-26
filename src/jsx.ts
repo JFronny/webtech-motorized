@@ -1,6 +1,6 @@
 // Glue code for JSX without React
 // Picked up by the IDE and Vite using their respective configs
-// Also see vite.config.js, tsconfig.json and external.d.ts
+// Also see vite.config.ts, tsconfig.json and external.d.ts
 
 export const JSX = {
   createElement: (

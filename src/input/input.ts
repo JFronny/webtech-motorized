@@ -25,9 +25,10 @@ interface DeviceOrientationEventiOS extends DeviceOrientationEvent {
   requestPermission?: () => Promise<"granted" | "denied">;
 }
 
-const requestPermission = typeof DeviceOrientationEvent !== "undefined"
-  ? (DeviceOrientationEvent as unknown as DeviceOrientationEventiOS).requestPermission
-  : undefined
+const requestPermission =
+  typeof DeviceOrientationEvent !== "undefined"
+    ? (DeviceOrientationEvent as unknown as DeviceOrientationEventiOS).requestPermission
+    : undefined;
 const orientationNeedsPermission = typeof requestPermission === "function";
 
 class InputManagerImpl {

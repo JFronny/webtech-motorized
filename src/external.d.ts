@@ -1,5 +1,5 @@
 // This is a hack to make the IDE happy about JSX without React
-// Also see vite.config.js, tsconfig.json, and jsx.ts
+// Also see vite.config.ts, tsconfig.json, and jsx.ts
 
 declare module JSX {
   type Element = HTMLElement | Text;
