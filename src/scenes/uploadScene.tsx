@@ -83,6 +83,8 @@ export function initUploadScreen(root: HTMLElement) {
     }
   }
 
+  Input.init();
+
   refreshDevices();
 
   const unregister = Input.onDeviceChange(refreshDevices);
