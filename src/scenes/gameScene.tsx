@@ -222,7 +222,7 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
           ctx.fillText("Game Over", 0, -0.5);
 
           // Flow: wait for release (y<=0) -> start 3s cooldown -> accept up (y>0) to restart
-          ctx.font = `0.7px system-ui, sans-serif`;
+          ctx.font = `0.45px system-ui, sans-serif`;
           if (deadInfo.waitingForRelease) {
             // waiting for the user to release Up
             ctx.fillText("Release Up to start 3s timer to enable restart", 0, 1);

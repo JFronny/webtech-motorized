@@ -98,7 +98,8 @@ class MovementGameImpl implements Game {
     // Adjust timing windows for slow devices (orientation)
     const isSlow = Input.hasAttribute("imprecise");
     const moveWindow = isSlow ? 0.5 : 0.3;
-    const gracePeriodAfterMove = isSlow ? 0.25 : 0.15;
+    const gracePeriodAfterMove = isSlow ? 1 : 0.15;
+    const threshold = Input.hasAttribute("imprecise") ? 0.5 : 0.3;
 
     // Find the current move (the first uncompleted move)
     let currentMoveIndex = -1;
@@ -127,11 +128,13 @@ class MovementGameImpl implements Game {
     const timeSincePreviousMove = nowSec - previousMoveTime;
 
     const moveVec = Input.sample();
-    const hasInput = Math.abs(moveVec[0]) > 0.4 || Math.abs(moveVec[1]) > 0.4;
+    const hasInput = Math.abs(moveVec[0]) > threshold || Math.abs(moveVec[1]) > threshold;
+    const directionMatches = (movement: Vec2, direction: Vec2) =>
+      Math.abs(movement[0] - direction[0]) < threshold && Math.abs(movement[1] + direction[1]) < threshold;
 
     // Check if we're within the input window
     if (timeToMove < moveWindow && timeToMove > -moveWindow) {
-      if (this.directionMatches(moveVec, currentMove.direction)) {
+      if (directionMatches(moveVec, currentMove.direction)) {
         this.playerPosition = currentMove.position;
         currentMove.completed = true;
       }
@@ -148,7 +151,7 @@ class MovementGameImpl implements Game {
 
     let inGracePeriod = false;
     if (previousMoveDirection && timeSincePreviousMove <= gracePeriodAfterMove) {
-      inGracePeriod = this.directionMatches(moveVec, previousMoveDirection);
+      inGracePeriod = directionMatches(moveVec, previousMoveDirection);
     }
 
     if (hasInput && outsideCurrentWindow && !inGracePeriod) {
@@ -159,10 +162,6 @@ class MovementGameImpl implements Game {
     if (this.audioCtx!.currentTime > this.endTime!) {
       this.state = "Finished";
     }
-  }
-
-  private directionMatches(movement: Vec2, direction: Vec2) {
-    return Math.abs(movement[0] - direction[0]) < 0.4 && Math.abs(movement[1] + direction[1]) < 0.4;
   }
 
   render(ctx: CanvasRenderingContext2D): void {

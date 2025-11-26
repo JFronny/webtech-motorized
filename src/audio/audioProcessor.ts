@@ -206,8 +206,6 @@ function classifyPeaks(peaks: number[], frameSize: number, data: Float32Array, s
     let treble = 0;
     for (let i = midEnd; i < fftLength; i++) treble += fft[i];
 
-    console.log("To Classify:", bass, mid, treble, fft.slice(0, 10));
-
     const total = bass + mid + treble;
 
     if (total === 0) {

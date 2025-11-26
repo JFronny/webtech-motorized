@@ -160,7 +160,7 @@ class DinoGameImpl implements Game {
 
     // Input
     const [_x, y] = Input.sample();
-    const threshold = Input.hasAttribute("imprecise") ? 0.6 : 0.3;
+    const threshold = Input.hasAttribute("imprecise") ? 0.4 : 0.3;
 
     // Jump if up pressed and player on ground
     if (y > threshold && this.playerY <= 0.001) {

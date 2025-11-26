@@ -25,6 +25,7 @@ class GuitarGameImpl implements Game {
 
   // Game constants
   private readonly NUM_LANES = 5;
+  private readonly LANE_SPACING = 4;
   private readonly FALL_DURATION = 1.5;
   private readonly CATCH_WINDOW = 0.15;
   private readonly PADDLE_WIDTH = 0.8;
@@ -45,8 +46,8 @@ class GuitarGameImpl implements Game {
 
   private laneToX(lane: Lane): number {
     // Convert lane index (0-4) to x position (-1 to 1) to match input range
-    const spacing = 2 / (this.NUM_LANES - 1);
-    return -1 + lane * spacing;
+    const spacing = this.LANE_SPACING / (this.NUM_LANES - 1);
+    return -(this.LANE_SPACING / 2) + lane * spacing;
   }
 
   init(runtime: GameRuntime): void {
@@ -100,11 +101,11 @@ class GuitarGameImpl implements Game {
         this.paddleX = this.laneToX(3);
       } else {
         // Left/right or no vertical input -> use x-axis
-        this.paddleX = sample[0];
+        this.paddleX = (this.LANE_SPACING / 2) * sample[0];
       }
     } else {
       // Analog devices use x-axis directly
-      this.paddleX = sample[0];
+      this.paddleX = (this.LANE_SPACING / 2) * sample[0];
     }
 
     // Check for notes that need to be caught
@@ -181,7 +182,7 @@ class GuitarGameImpl implements Game {
       const halfSize = this.NOTE_SIZE / 2;
 
       ctx.fillStyle = "white";
-      ctx.fillRect(noteX - halfSize, y - halfSize, this.NOTE_SIZE, this.NOTE_SIZE);
+      ctx.fillRect(noteX - halfSize, y - this.NOTE_SIZE, this.NOTE_SIZE, this.NOTE_SIZE);
 
       // Color based on proximity to catch window
       if (Math.abs(timeDiff) <= this.CATCH_WINDOW) {
@@ -194,7 +195,7 @@ class GuitarGameImpl implements Game {
         ctx.strokeStyle = "white";
       }
       ctx.lineWidth = 0.05;
-      ctx.strokeRect(noteX - halfSize, y - halfSize, this.NOTE_SIZE, this.NOTE_SIZE);
+      ctx.strokeRect(noteX - halfSize, y - this.NOTE_SIZE, this.NOTE_SIZE, this.NOTE_SIZE);
     }
 
     // Draw end of minigame line
