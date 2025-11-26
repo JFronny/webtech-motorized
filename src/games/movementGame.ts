@@ -16,6 +16,7 @@ class MovementGameImpl implements Game {
 
   private playerPosition: Vec2 = [0, 0];
   private lastDirection: Vec2 = [0, 0];
+  private cameraPosition: Vec2 = [0, 0];
   private moves: Move[] = [];
 
   // Runtime information
@@ -23,15 +24,6 @@ class MovementGameImpl implements Game {
   private startTime: number | undefined;
   private endTime: number | undefined;
   private analysis: AudioAnalysis | undefined;
-
-  // Camera position
-  private cameraX = 0;
-  private cameraY = 0;
-
-  // Transform world coordinates to camera space
-  private toCameraSpace(worldX: number, worldY: number): Vec2 {
-    return [worldX - this.cameraX, worldY - this.cameraY];
-  }
 
   private prng(seed: number): number {
     return Math.abs(Math.sin(seed) * 10000) % 1;
@@ -70,9 +62,8 @@ class MovementGameImpl implements Game {
     // Reset state
     this.playerPosition = [0, 0];
     this.lastDirection = [0, 0];
+    this.cameraPosition = [0, 0];
     this.moves = [];
-    this.cameraX = 0;
-    this.cameraY = 0;
 
     // Generate moves from peaks
     const peaks = this.analysis.peaks;
@@ -172,24 +163,25 @@ class MovementGameImpl implements Game {
     return Math.abs(movement[0] - direction[0]) < 0.4 && Math.abs(movement[1] + direction[1]) < 0.4;
   }
 
-  render(ctx: CanvasRenderingContext2D, cssW: number, cssH: number): void {
+  render(ctx: CanvasRenderingContext2D): void {
     if (this.state == "Initialized") this.state = "Playing";
-
-    ctx.save();
-    ctx.translate(cssW / 2, cssH / 2);
 
     // Update camera to follow player smoothly
     const cameraSpeed = 0.05;
-    const targetX = this.playerPosition[0] * 50;
-    const targetY = this.playerPosition[1] * 50;
-    this.cameraX += (targetX - this.cameraX) * cameraSpeed;
-    this.cameraY += (targetY - this.cameraY) * cameraSpeed;
+    const targetX = this.playerPosition[0];
+    const targetY = this.playerPosition[1];
+    this.cameraPosition[0] += (targetX - this.cameraPosition[0]) * cameraSpeed;
+    this.cameraPosition[1] += (targetY - this.cameraPosition[1]) * cameraSpeed;
+
+    // Transform world coordinates to camera space
+    ctx.save();
+    ctx.translate(-this.cameraPosition[0], -this.cameraPosition[1]);
+    ctx.lineWidth = 0.05;
 
     // Draw player
-    const playerScreenPos = this.toCameraSpace(this.playerPosition[0] * 50, this.playerPosition[1] * 50);
     ctx.fillStyle = "blue";
     ctx.beginPath();
-    ctx.arc(playerScreenPos[0], playerScreenPos[1], 10, 0, Math.PI * 2);
+    ctx.arc(this.playerPosition[0], this.playerPosition[1], 0.3, 0, Math.PI * 2);
     ctx.fill();
 
     // Draw path
@@ -200,22 +192,20 @@ class MovementGameImpl implements Game {
       const move = upcomingMoves[i];
       const timeToMove = move.time - nowSec;
 
-      const squareSize = 40;
+      const squareSize = 1;
       const halfSize = squareSize / 2;
 
-      const worldPos = this.toCameraSpace(move.position[0] * 50, move.position[1] * 50);
-
       ctx.strokeStyle = "white";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(worldPos[0] - halfSize, worldPos[1] - halfSize, squareSize, squareSize);
+      ctx.lineWidth = 0.1;
+      ctx.strokeRect(move.position[0] - halfSize, move.position[1] - halfSize, squareSize, squareSize);
 
       // Draw double rectangle for the last target
       if (upcomingMoves.length === 1) {
-        const doubleRectOffset = 6;
+        const doubleRectOffset = 0.2;
         ctx.strokeStyle = "red";
         ctx.strokeRect(
-          worldPos[0] - halfSize - doubleRectOffset,
-          worldPos[1] - halfSize - doubleRectOffset,
+          move.position[0] - halfSize - doubleRectOffset,
+          move.position[1] - halfSize - doubleRectOffset,
           squareSize + doubleRectOffset * 2,
           squareSize + doubleRectOffset * 2,
         );
@@ -224,7 +214,12 @@ class MovementGameImpl implements Game {
       const innerSquareSize = Math.max(0, squareSize * (1 - timeToMove));
       const innerHalfSize = innerSquareSize / 2;
       ctx.fillStyle = "white";
-      ctx.fillRect(worldPos[0] - innerHalfSize, worldPos[1] - innerHalfSize, innerSquareSize, innerSquareSize);
+      ctx.fillRect(
+        move.position[0] - innerHalfSize,
+        move.position[1] - innerHalfSize,
+        innerSquareSize,
+        innerSquareSize,
+      );
     }
 
     ctx.restore();

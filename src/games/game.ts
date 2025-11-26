@@ -6,7 +6,7 @@ export interface Game {
   id: string;
 
   init(runtime: GameRuntime): void;
-  render(ctx: CanvasRenderingContext2D, cssW: number, cssH: number): void;
+  render(ctx: CanvasRenderingContext2D): void;
   update(timestamp: number, deltaTime: number): void;
 
   state: GameState;

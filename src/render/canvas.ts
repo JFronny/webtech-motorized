@@ -7,14 +7,7 @@ import vertexShaderSource from "./main.vert?raw";
 // This allows post-processing effects to be applied to the game scene while remaining compatible
 
 export interface CanvasRenderer {
-  render(
-    ctx: CanvasRenderingContext2D,
-    canvas: HTMLCanvasElement,
-    cssW: number,
-    cssH: number,
-    timestamp: number,
-    deltaTime: number,
-  ): void;
+  render(ctx: CanvasRenderingContext2D, canvas: HTMLCanvasElement, timestamp: number, deltaTime: number): void;
 }
 
 export type CanvasController = {
@@ -162,7 +155,14 @@ export function initCanvas(container: HTMLDivElement): CanvasController {
 
     if (customRenderer) {
       try {
-        customRenderer.render(ctx, canvas2d, cssW, cssH, ts, dt);
+        // Apply standard transformations to make rendering easier
+        ctx.save();
+        ctx.translate(cssW / 2, cssH / 2);
+        ctx.scale(cssW / 10, cssW / 10);
+
+        customRenderer.render(ctx, canvas2d, ts, dt);
+
+        ctx.restore();
       } catch (e) {
         console.error("Error rendering custom renderer:", e);
         fallback();

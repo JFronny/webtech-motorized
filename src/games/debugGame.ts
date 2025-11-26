@@ -35,8 +35,22 @@ class DebugGameImpl implements Game {
     this.state = "Initialized";
   }
 
-  render(ctx: CanvasRenderingContext2D, cssW: number, cssH: number): void {
+  render(ctx: CanvasRenderingContext2D): void {
     if (this.state == "Initialized") this.state = "Playing";
+
+    // Undo transformation applied in canvas.ts
+    // This game isn't visible to users anyway
+
+    // Get the actual canvas dimensions
+    const canvas = ctx.canvas;
+    const cssW = canvas.width / (window.devicePixelRatio || 1);
+    const cssH = canvas.height / (window.devicePixelRatio || 1);
+
+    // Undo the transformations applied by canvas.ts to work in CSS pixels
+    ctx.save();
+    const scale = cssW / 10;
+    ctx.scale(1 / scale, 1 / scale);
+    ctx.translate(-cssW / 2, -cssH / 2);
 
     // Compute current playback time in seconds
     const nowSec = Math.max(0, this.audioCtx!.currentTime - this.startTime!);
@@ -136,6 +150,8 @@ class DebugGameImpl implements Game {
     ctx.arc(x, y, 6, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillText(`(${sample[0].toFixed(2)}, ${sample[1].toFixed(2)})`, x + 12, y - 4);
+
+    ctx.restore();
   }
   update(_timestamp: number, _deltaTime: number): void {}
 }

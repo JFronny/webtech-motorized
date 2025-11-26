@@ -184,16 +184,9 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
   nextGame();
 
   return {
-    render(
-      ctx: CanvasRenderingContext2D,
-      _canvas2d: HTMLCanvasElement,
-      cssW: number,
-      cssH: number,
-      timestamp: number,
-      deltaTime: number,
-    ): void {
+    render(ctx: CanvasRenderingContext2D, _canvas2d: HTMLCanvasElement, timestamp: number, deltaTime: number): void {
       if (isRestarting) return;
-      games[currentGame].render(ctx, cssW, cssH);
+      games[currentGame].render(ctx);
       switch (games[currentGame].state) {
         case "Finished":
           if (runtime.audioCtx.currentTime <= runtime.startTime + runtime.source.buffer!.duration - 0.5) {
@@ -221,17 +214,17 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
 
           // Darken the screen
           ctx.fillStyle = "rgba(255,0,0,0.3)";
-          ctx.fillRect(0, 0, cssW, cssH);
+          ctx.fillRect(-5, -5, 10, 10);
           ctx.fillStyle = "white";
           ctx.textAlign = "center";
-          ctx.font = "96px system-ui, sans-serif";
-          ctx.fillText("Game Over", cssW / 2, cssH / 2 - 36);
+          ctx.font = `1.8px system-ui, sans-serif`;
+          ctx.fillText("Game Over", 0, -0.5);
 
           // Flow: wait for release (y<=0) -> start 3s cooldown -> accept up (y>0) to restart
-          ctx.font = "28px system-ui, sans-serif";
+          ctx.font = `0.7px system-ui, sans-serif`;
           if (deadInfo.waitingForRelease) {
             // waiting for the user to release Up
-            ctx.fillText("Release Up to start 3s timer to enable restart", cssW / 2, cssH / 2 + 8);
+            ctx.fillText("Release Up to start 3s timer to enable restart", 0, 1);
             if (y <= 0) {
               deadInfo.waitingForRelease = false;
               deadInfo.releaseTimestamp = timestamp;
@@ -239,9 +232,9 @@ export function createGameRenderer(runtime: GameRuntime, onWin: () => void): Can
             }
           } else if (timestamp < deadInfo.cooldownUntil) {
             const remaining = Math.ceil((deadInfo.cooldownUntil - timestamp) / 1000);
-            ctx.fillText(`Ready in ${remaining}s…`, cssW / 2, cssH / 2 + 8);
+            ctx.fillText(`Ready in ${remaining}s…`, 0, 1);
           } else {
-            ctx.fillText("Press Up to restart", cssW / 2, cssH / 2 + 8);
+            ctx.fillText("Press Up to restart", 0, 1);
             if (y > 0) restart();
           }
           break;

@@ -42,7 +42,7 @@ class DinoGameImpl implements Game {
   private readonly playerW = 0.03;
   private readonly playerH = 0.05;
   private readonly obstacleW = 0.02;
-  private readonly obstacleH = 0.05;
+  private readonly obstacleH = 0.06;
   private readonly gravity = -2.8;
   private readonly jumpV = 0.9;
 
@@ -110,53 +110,47 @@ class DinoGameImpl implements Game {
     return { l, r, t: top, b: bottom };
   }
 
-  render(ctx: CanvasRenderingContext2D, cssW: number, cssH: number): void {
+  render(ctx: CanvasRenderingContext2D): void {
     if (this.state == "Initialized") this.state = "Playing";
-
-    // Pixel-scale multipliers
-    const pxW = cssW;
-    const pxH = cssH;
 
     // Current audio time
     const nowSec = Math.max(0, this.audioCtx!.currentTime - this.startTime!);
 
-    // Draw ground line in middle (using pixels)
-    const midYpx = Math.round(pxH * 0.5);
+    // Draw ground line in middle (at y=0)
     ctx.strokeStyle = "white";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 0.05;
     ctx.beginPath();
-    ctx.moveTo(0, midYpx);
-    ctx.lineTo(pxW, midYpx);
+    ctx.moveTo(-5, 0);
+    ctx.lineTo(5, 0);
     ctx.stroke();
 
-    // Draw player using normalized rect scaled to pixels
-    const p = this.playerRectNorm();
-    const playerXpx = Math.round(p.l * pxW);
-    const playerYpx = Math.round(p.t * pxH);
-    const playerWpx = Math.round((p.r - p.l) * pxW);
-    const playerHpx = Math.round((p.b - p.t) * pxH);
-    ctx.fillStyle = "white";
-    ctx.fillRect(playerXpx, playerYpx, playerWpx, playerHpx);
+    // Convert to [0,1] normalized coords and scale to canvas size
+    ctx.save();
+    ctx.translate(-5, -5);
+    ctx.scale(10, 10);
 
-    // Draw obstacles (compute normalized rects then scale)
+    // Draw player
+    const p = this.playerRectNorm();
+    ctx.fillStyle = "blue";
+    ctx.fillRect(p.l, p.t, p.r - p.l, p.b - p.t);
+    ctx.fillStyle = "white";
+
+    // Draw obstacles
     for (let ob of this.obstacles) {
       const r = this.obstacleRectNorm(ob, nowSec);
-      const xpx = Math.round(r.l * pxW);
-      const ypx = Math.round(r.t * pxH);
-      const wpx = Math.round((r.r - r.l) * pxW);
-      const hpx = Math.round((r.b - r.t) * pxH);
-      ctx.fillRect(xpx, ypx, wpx, hpx);
+      ctx.fillRect(r.l, r.t, r.r - r.l, r.b - r.t);
     }
 
     // Draw end time line
-    const endXNorm = (this.endTime! - this.audioCtx!.currentTime) * this.speed;
-    const endXpx = Math.round(endXNorm * pxW);
+    const endX = (this.endTime! - this.audioCtx!.currentTime) * this.speed;
     ctx.strokeStyle = "red";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 0.005;
     ctx.beginPath();
-    ctx.moveTo(endXpx, 0);
-    ctx.lineTo(endXpx, pxH);
+    ctx.moveTo(endX, -10);
+    ctx.lineTo(endX, 10);
     ctx.stroke();
+
+    ctx.restore();
   }
 
   update(_timestamp: number, deltaTime: number): void {
