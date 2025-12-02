@@ -17,6 +17,8 @@ Then host the contents of the `dist` folder under the path `/webtech-motorized/`
 - unglued (big data)
 - lent (autoheart)
 - hardware store (weird al)
+- logic gatekeeper (danimal cannon and zef)
+- chronos (danimal cannon and zef)
 
 ## This repository
 
