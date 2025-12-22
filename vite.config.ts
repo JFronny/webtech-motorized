@@ -17,8 +17,4 @@ export default defineConfig({
     }),
   ],
   base: "/webtech-motorized/",
-  esbuild: {
-    jsxFactory: "JSX.createElement",
-    jsxFragment: "HTMLElement",
-  },
 });
