@@ -38,14 +38,14 @@ jobs:
           path: ./dist
       - name: Create submission archive
         run: |
-          git archive --format=zip --prefix=source/ HEAD > submission.zip
-          7z a submission.zip README.md
-          7z a submission.zip dist
+          git archive --format=zip --prefix=source/ HEAD > 2524781.zip
+          7z a 2524781.zip README.md
+          7z a 2524781.zip dist
       - name: Upload submission archive
         uses: actions/upload-artifact@v4
         with:
           name: submission-archive
-          path: ./submission.zip
+          path: ./2524781.zip
 
   deploy:
     environment:
