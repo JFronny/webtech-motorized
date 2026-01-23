@@ -32,12 +32,15 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build with Next.js
         run: pnpm run build
-      - name: Create submission archive
-        run: ./mksubmission.sh
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./dist
+      - name: Create submission archive
+        run: |
+          git archive --format=zip --prefix=source/ HEAD > submission.zip
+          7z a submission.zip README.md
+          7z a submission.zip dist
       - name: Upload submission archive
         uses: actions/upload-artifact@v4
         with:
