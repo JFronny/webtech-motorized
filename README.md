@@ -3,12 +3,14 @@
 Motorized is a simple canvas-based rhythm game.
 Given an arbitrary song, it does its best to generate a playable level consisting of several minigames.
 
+It is hosted at https://jfronny.github.io/webtech-motorized/ for testing.
+
 ## Building
 
 - `npm install`
 - `npm run build`
 
-Then host the contents of the `dist` folder under the path `/webtech-motorized/` on a web server that supports HTTPS.
+Then host the contents of the `dist` folder under the path `/webtech-motorized/` on a web server **that supports HTTPS**.
 
 ## Songs that work well:
 
