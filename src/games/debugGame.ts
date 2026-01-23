@@ -3,6 +3,10 @@ import type { GameRuntime } from "../scenes/gameScene";
 import type { AudioAnalysis } from "../audio/audioProcessor";
 import { Input } from "../input/input";
 
+// Not really a minigame.
+// Replace the content of the `games` array in gameScene.tsx with this to get
+// insights into the results of the audio processing part of this project.
+
 class DebugGameImpl implements Game {
   readonly id = "debug";
 

@@ -1,3 +1,5 @@
+// Utilities for audio processing
+
 export function toMono(buffer: AudioBuffer): Float32Array {
   if (buffer.numberOfChannels === 1) return buffer.getChannelData(0);
   const len = buffer.length;

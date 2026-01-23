@@ -2,6 +2,10 @@ import type { InputDevice } from "./input";
 import { clamp } from "./util";
 import type { Vec2 } from "src/games/game";
 
+// An input device implementation using touch input.
+// Should always and preferred be available on mobile.
+// See input.ts for the API
+
 export class TouchDevice implements InputDevice {
   readonly id = "touch";
   readonly name = "Touch (first finger)";

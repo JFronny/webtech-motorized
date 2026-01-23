@@ -2,7 +2,11 @@ import type { InputDevice } from "./input";
 import { clamp } from "./util";
 import type { Vec2 } from "src/games/game";
 
-// I have validate that only one instance of this class is ever created,
+// An input device implementation using the device orientation API.
+// Using this device is quite difficult, which is why isSlow is set.
+// See input.ts for the API
+
+// I have validated that only one instance of this class is ever created,
 // both by reviewing my code and by using a callback from the constructor.
 // For some reason, this still does not properly carry state if it is placed in the class definition.
 // As such, I am using a global variable to store the last orientation event.
@@ -14,7 +18,7 @@ export class OrientationDevice implements InputDevice {
   readonly name = "Device Orientation";
   readonly isContinuous: boolean = true;
   readonly precision: number = 0.5;
-  readonly slow: boolean = false;
+  readonly slow: boolean = true;
 
   constructor() {
     window.addEventListener("deviceorientation", this.onDeviceOrientation);

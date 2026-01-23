@@ -2,6 +2,10 @@ import type { InputDevice } from "./input";
 import { clamp } from "./util";
 import type { Vec2 } from "src/games/game";
 
+// An input device implementation using the gamepad API
+// I have not had the chance to test this since I do not own a suitable device.
+// See input.ts for the API
+
 export class GamepadDevice implements InputDevice {
   readonly index: number;
   readonly id: string;

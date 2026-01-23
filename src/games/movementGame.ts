@@ -3,6 +3,9 @@ import type { GameRuntime } from "../scenes/gameScene";
 import { Input } from "../input/input";
 import type { AudioAnalysis } from "../audio/audioProcessor";
 
+// A minigame about moving in a series of directions indicated via growing squares.
+// See game.ts for the API
+
 type Direction = "up" | "down" | "left" | "right";
 
 type Move = {

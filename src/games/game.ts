@@ -1,5 +1,7 @@
 import type { GameRuntime } from "../scenes/gameScene";
 
+// Interface for unifying interaction from gameScene with the individual games.
+
 export type GameState = "Finished" | "Initialized" | "Playing" | "Dead";
 
 export interface Game {

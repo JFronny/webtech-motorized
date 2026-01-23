@@ -1,6 +1,10 @@
 import type { InputDevice } from "./input";
 import type { Vec2 } from "src/games/game";
 
+// An input device implementation using the keyboard.
+// Does not support continuous input.
+// See input.ts for the API
+
 export class KeyboardDevice implements InputDevice {
   readonly id = "keyboard";
   readonly name = "Keyboard (WASD / Arrows)";

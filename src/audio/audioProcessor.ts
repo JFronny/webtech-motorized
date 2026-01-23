@@ -1,9 +1,13 @@
-// Thanks to https://dsp.stackexchange.com/questions/9521/simple-beat-detection-algorithm-for-microcontroller
-
 import { dwtHaarLevels } from "./dwt";
 import { meanRemove, movingAverage, normalize, toMono } from "./util";
 import { Abs, FFT } from "./fft";
 import { clamp } from "src/input/util.ts";
+
+// Core audio processing code.
+// Getting this to work was much more difficult than I expected.
+// To convey part of the problems and to showcase other approaches I tried,
+// this file also contains a few leftovers from previous attempts.
+// Based in part on https://dsp.stackexchange.com/questions/9521/simple-beat-detection-algorithm-for-microcontroller
 
 export type AudioAnalysis = {
   sampleRate: number;

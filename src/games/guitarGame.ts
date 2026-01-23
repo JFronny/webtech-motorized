@@ -3,6 +3,10 @@ import type { GameRuntime } from "../scenes/gameScene";
 import { Input } from "../input/input";
 import type { AudioAnalysis } from "../audio/audioProcessor";
 
+// A minigame about moving hitting notes moving down five lanes with a moveable paddle, inspired by guitar hero,
+// but adjusted to work with the various input APIs
+// See game.ts for the API
+
 type Lane = 0 | 1 | 2 | 3 | 4;
 type Note = {
   time: number; // audio time when note should be caught

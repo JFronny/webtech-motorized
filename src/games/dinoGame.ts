@@ -3,6 +3,9 @@ import type { Game, GameState, Rect } from "src/games/game";
 import type { GameRuntime } from "src/scenes/gameScene";
 import { Input } from "src/input/input";
 
+// A minigame about jumping over obstacles, inspired by the Chrome dino game.
+// See game.ts for the API
+
 type Lane = "high" | "low";
 
 type Obstacle = {

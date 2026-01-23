@@ -22,6 +22,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+// Modified here by Johannes Frohnmeyer to use Float32Array and other TypeScript types for safety
+
 export function FFT(signal: Float32Array | ComplexFloat32Array): ComplexFloat32Array {
   if (!(signal instanceof ComplexFloat32Array)) signal = new ComplexFloat32Array(signal);
   if (signal.length <= 1) return signal;
